@@ -1,0 +1,2743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>waifu-magnet a.k.a llama.garden</title>
+
+<style>
+  :root {
+    /* === COLOR PALETTE — pick one accent, then delete this block later ===
+       Uncomment one line to preview. All pink references derive from these.
+    */
+    /* A) pink   */ --accent: #e879f9; --accent-dim: #a21caf;
+    /* B) cyan   */ /* --accent: #22d3ee; --accent-dim: #0e7490; */
+    /* C) green  */ /* --accent: #34d399; --accent-dim: #059669; */
+    /* D) amber  */ /* --accent: #fbbf24; --accent-dim: #d97706; */
+    /* E) blue   */ /* --accent: #60a5fa; --accent-dim: #2563eb; */
+    /* F) red    */ /* --accent: #f87171; --accent-dim: #dc2626; */
+    /* G) violet */ /* --accent: #a78bfa; --accent-dim: #7c3aed; */
+
+    --bg: #0a0a0b;
+    --surface: #131316;
+    --surface2: #1a1a1f;
+    --border: #26262d;
+    --border-hi: #3a3a44;
+    --fg: #e4e4e7;
+    --muted: #71717a;
+    --muted2: #a1a1aa;
+    --green: #34d399;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--sans); font-size: 14px; line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* === UPDATE BANNER === */
+  #banner {
+    display: none; position: sticky; top: 0; z-index: 100;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 12px 20px; gap: 14px; align-items: center;
+  }
+  #banner.show { display: flex; }
+  #banner .msg { flex: 1; font-size: 13px; }
+  #banner .msg strong { font-weight: 600; }
+  #banner.verified { border-bottom-color: var(--green); }
+  #banner.verified .msg { color: var(--green); }
+  #banner.warn { border-bottom-color: var(--red); background: #1a0e0e; }
+  #banner.warn .msg { color: var(--red); }
+  #banner .btn {
+    background: var(--accent); color: #000; padding: 6px 14px;
+    border-radius: var(--radius-sm); font-weight: 600; font-size: 12px;
+    text-decoration: none; white-space: nowrap; border: none; cursor: pointer;
+    font-family: var(--sans);
+  }
+  #banner .btn:hover { opacity: 0.88; }
+  #banner .btn-secondary {
+    background: transparent; color: var(--fg); border: 1px solid var(--border-hi);
+  }
+  #banner .close {
+    cursor: pointer; color: var(--muted); font-size: 20px; padding: 0 4px;
+    line-height: 1; background: none; border: none; font-family: var(--sans);
+  }
+  #banner .close:hover { color: var(--fg); }
+  #banner .spinner {
+    width: 13px; height: 13px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite; display: inline-block;
+    vertical-align: middle; margin-right: 6px;
+  }
+
+  /* === HEADER === */
+  header {
+    padding: 28px 24px 20px; border-bottom: 1px solid var(--border);
+  }
+  header .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  header h1 {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-flex; align-items: center; gap: 8px;
+    cursor: pointer; user-select: none;
+  }
+  header .ver-badge {
+    font-size: 11px; font-weight: 600; color: var(--accent);
+    -webkit-text-fill-color: var(--accent);
+    background: var(--accent-dim); background: color-mix(in srgb, var(--accent) 10%, transparent); padding: 2px 8px;
+    border-radius: 20px; border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+  header .aka {
+    font-size: 13px; color: #888; font-weight: normal;
+    -webkit-text-fill-color: #888;
+  }
+  header .stats {
+    display: flex; gap: 20px; flex-wrap: wrap;
+  }
+  header .stat {
+    font-size: 12px; color: var(--muted);
+  }
+  header .stat b {
+    color: var(--fg); font-weight: 600; font-family: var(--mono); font-size: 13px;
+  }
+  header .stat .dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--amber); margin-right: 5px; vertical-align: middle;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  header .stat .dot.live { background: var(--green); animation: none; }
+  header .stat .dot.err  { background: var(--red); animation: none; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* === TOOLBAR === */
+  #toolbar {
+    display: flex; gap: 10px; padding: 14px 24px; align-items: center;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  #toolbar .toolbar-actions {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  #toolbar .toolbar-actions > * + * { margin-left: 4px; }
+  #search {
+    flex: 1; min-width: 200px; background: var(--surface);
+    border: 1px solid var(--border); color: var(--fg);
+    padding: 8px 14px 8px 36px; border-radius: var(--radius-sm);
+    font-size: 13px; font-family: var(--sans); outline: none;
+    transition: border-color 0.15s;
+  }
+  #search:focus { border-color: var(--accent-dim); }
+  #search-wrap { position: relative; flex: 1; min-width: 200px; }
+  #search-wrap::before {
+    content: "⌕"; position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%); color: var(--muted); font-size: 16px;
+    pointer-events: none;
+  }
+  #sort {
+    background: var(--surface); border: 1px solid var(--border); color: var(--fg);
+    padding: 8px 12px; border-radius: var(--radius-sm); font-size: 12px;
+    font-family: var(--sans); outline: none; cursor: pointer;
+  }
+  #sort:hover { border-color: var(--border-hi); }
+
+  /* === TOGGLES (segmented controls) — hidden for now; most listings are
+     legacy format so the filters do little. Logic is intact; re-enable by
+     removing `display:none` below. === */
+  #toggles {
+    display: none;
+    gap: 16px; padding: 10px 24px; align-items: center;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .toggle-group {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toggle-group .tg-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted); font-weight: 600;
+  }
+  .seg {
+    display: inline-flex; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); overflow: hidden;
+  }
+  .seg button {
+    background: transparent; border: none; color: var(--muted2);
+    padding: 6px 12px; font-size: 12px; font-family: var(--sans); cursor: pointer;
+    border-right: 1px solid var(--border); transition: all 0.12s;
+  }
+  .seg button:last-child { border-right: none; }
+  .seg button:hover { color: var(--fg); }
+  .seg button.active {
+    background: var(--accent); color: #000; font-weight: 600;
+  }
+  .seg button.active:hover { color: #000; }
+  .seg.disabled { opacity: 0.4; pointer-events: none; }
+  #filter-count {
+    font-size: 11px; color: var(--muted); margin-left: auto;
+    white-space: nowrap;
+  }
+  #filter-count b { color: var(--fg); font-family: var(--mono); }
+
+  /* === CONTENT === */
+  #content { padding: 16px 24px 40px; }
+
+  /* === CONNECTION INDICATOR (toolbar) === */
+  #conn-indicator {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted2); font-family: var(--mono);
+    white-space: nowrap;
+  }
+  #conn-indicator .conn-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--amber); animation: pulse 1.5s ease-in-out infinite;
+  }
+  #conn-indicator .conn-dot.live { background: var(--green); animation: none; }
+  #conn-indicator .conn-dot.err  { background: var(--red); animation: none; }
+
+  /* === TORRENT GRID === */
+  #grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 12px;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s; position: relative;
+    overflow: hidden;
+  }
+  .card:hover { border-color: var(--border-hi); }
+  .card:active { transform: scale(0.995); }
+  .card.request-card {
+    border-style: dashed; border-color: var(--border-hi);
+    display: flex; flex-direction: column; justify-content: center;
+    align-items: flex-start; cursor: pointer;
+  }
+  .card.request-card:hover { border-color: var(--accent); }
+  .card.request-card .rc-title {
+    font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 6px;
+  }
+  .card.request-card .rc-sub {
+    font-size: 12px; color: var(--muted2); line-height: 1.4;
+  }
+  .card .name {
+    font-size: 15px; font-weight: 700; color: var(--fg);
+    margin-bottom: 14px; word-break: break-all; line-height: 1.35;
+    padding-right: 20px;
+  }
+  .card .row-lab-size {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .card .lab {
+    font-size: 11px; color: var(--muted2); text-transform: none;
+  }
+  .card .size {
+    font-family: var(--mono); font-size: 13px; color: var(--accent);
+    font-weight: 700;
+  }
+  .card .row-meta {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .badge {
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+    border: 1px solid var(--border); color: var(--muted2);
+    font-family: var(--sans); letter-spacing: 0.02em; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .badge.base, .badge.fineturn, .badge.quant, .badge.legacy {
+    color: var(--muted2); border-color: var(--border);
+  }
+  .badge.legacy { font-style: italic; text-transform: none; }
+  .badge.format { color: var(--muted2); border-color: var(--border); text-transform: none; font-family: var(--mono); }
+  .card .hf-btn {
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+    border: 1px solid var(--border); color: var(--muted2); text-decoration: none;
+    text-transform: uppercase; letter-spacing: 0.02em; white-space: nowrap;
+    transition: all 0.12s;
+  }
+  .card .hf-btn:hover { border-color: var(--border-hi); color: var(--fg); }
+  .card .row-actions {
+    display: flex; gap: 8px; align-items: center; justify-content: space-between;
+  }
+  .card .client-note {
+    font-size: 11px; color: var(--muted); cursor: pointer;
+  }
+  .card .client-note:hover { color: var(--muted2); }
+  .card .dl-btn {
+    background: var(--accent); color: #000; padding: 5px 14px;
+    border: none;
+    border-radius: var(--radius-sm); cursor: pointer;
+    font-size: 11px; font-weight: 700; font-family: var(--sans);
+    text-decoration: none; transition: opacity 0.12s; white-space: nowrap;
+  }
+  .card .dl-btn:hover { opacity: 0.85; }
+  .card .dl-btn.disabled { background: var(--surface2); color: var(--muted); cursor: default; pointer-events: none; }
+  .card .dl-btn.verifying { background: var(--surface2); color: var(--muted2); pointer-events: none; }
+  .card .dl-btn.verifying::before {
+    content: ""; display: inline-block; width: 10px; height: 10px;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: middle; margin-right: 5px;
+  }
+  .card .dl-btn.invalid { background: var(--red); color: #fff; pointer-events: none; }
+  .card .chevron {
+    position: absolute; top: 16px; right: 14px; color: var(--muted2);
+    font-size: 18px; font-weight: 700; transition: transform 0.15s;
+  }
+  .card:hover .chevron { color: var(--fg); transform: translateX(2px); }
+
+  /* === MODAL === */
+  #modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    justify-content: center; align-items: flex-start; padding: 40px 20px;
+    overflow-y: auto;
+  }
+  #modal-overlay.show { display: flex; }
+  #modal {
+    background: var(--surface); border: 1px solid var(--border-hi);
+    border-radius: var(--radius); max-width: 680px; width: 100%;
+    padding: 24px; position: relative; margin: auto 0;
+  }
+  #modal .modal-close {
+    position: absolute; top: 16px; right: 18px; cursor: pointer;
+    color: var(--muted); font-size: 22px; line-height: 1;
+    background: none; border: none; font-family: var(--sans);
+  }
+  #modal .modal-close:hover { color: var(--fg); }
+  #modal .modal-name {
+    font-size: 17px; font-weight: 700; margin-bottom: 16px;
+    word-break: break-all; padding-right: 30px; line-height: 1.3;
+  }
+  #modal .section { margin-bottom: 16px; }
+  #modal .label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted); margin-bottom: 4px; font-weight: 600;
+  }
+  #modal .val {
+    font-size: 13px; font-family: var(--mono); word-break: break-all;
+    color: var(--fg);
+  }
+  #modal .val.mono-sm { font-size: 11px; color: var(--muted2); }
+  #modal .val.prose { font-family: var(--sans); word-break: normal; line-height: 1.5; }
+  #modal .pill-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  #modal .pill {
+    background: var(--surface2); padding: 3px 8px; border-radius: 4px;
+    font-size: 11px; color: var(--muted2); font-family: var(--mono);
+  }
+  #modal .pill.invalid { color: var(--red); border-color: var(--red); }
+  #modal .pill.verifying { color: var(--muted); }
+  #modal .torrent-warning {
+    background: #1a0e0e; border: 1px solid var(--red); border-radius: var(--radius-sm);
+    padding: 14px 16px; margin-bottom: 16px;
+  }
+  #modal .torrent-warning .tw-head {
+    font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 6px;
+  }
+  #modal .torrent-warning .tw-body {
+    font-size: 12px; color: var(--muted2); line-height: 1.5;
+  }
+  #modal pre {
+    background: var(--bg); padding: 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); font-size: 11px; color: var(--muted2);
+    max-height: 260px; overflow: auto; white-space: pre-wrap;
+    word-break: break-all; font-family: var(--mono);
+  }
+  #modal .copy-inline {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--muted2);
+    padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;
+    font-family: var(--sans); margin-left: 8px; vertical-align: middle;
+  }
+  #modal .copy-inline:hover { border-color: var(--accent-dim); color: var(--accent); }
+  #modal .magnet-btn {
+    background: var(--accent); color: #000; padding: 8px 16px;
+    border-radius: var(--radius-sm); font-weight: 600; font-size: 12px;
+    border: none; cursor: pointer; font-family: var(--sans);
+    margin-bottom: 16px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  #modal .magnet-btn:hover { opacity: 0.88; }
+  #modal .magnet-btn.copied { background: var(--green); }
+  #modal .kv-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px;
+    margin-bottom: 16px;
+  }
+  #modal .kv-grid .section { margin-bottom: 0; }
+  @media (max-width: 520px) {
+    #modal .kv-grid { grid-template-columns: 1fr; }
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #req-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    justify-content: center; align-items: flex-start; padding: 40px 20px;
+    overflow-y: auto;
+  }
+  #req-overlay.show { display: flex; }
+
+  /* === REQUEST MODAL === */
+  #req-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--fg);
+    padding: 8px 14px; border-radius: var(--radius-sm); font-size: 12px;
+    font-family: var(--sans); cursor: pointer; white-space: nowrap;
+    transition: all 0.12s;
+  }
+  #req-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+  #req-modal {
+    background: var(--surface); border: 1px solid var(--border-hi);
+    border-radius: var(--radius); max-width: 560px; width: 100%;
+    padding: 24px; position: relative; margin: auto 0;
+  }
+  #req-modal .modal-close {
+    position: absolute; top: 16px; right: 18px; cursor: pointer;
+    color: var(--muted); font-size: 22px; line-height: 1;
+    background: none; border: none; font-family: var(--sans);
+  }
+  #req-modal .modal-close:hover { color: var(--fg); }
+  #req-modal h2 {
+    font-size: 17px; font-weight: 700; margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  #req-modal .req-intro {
+    font-size: 12px; color: var(--muted2); margin-bottom: 16px; line-height: 1.5;
+  }
+  #req-modal .field { margin-bottom: 14px; }
+  #req-modal .field label {
+    display: block; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px;
+    font-weight: 600;
+  }
+  #req-modal .field label .req { color: var(--red); margin-left: 2px; }
+  #req-modal .field input,
+  #req-modal .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    color: var(--fg); padding: 8px 12px; border-radius: var(--radius-sm);
+    font-size: 13px; font-family: var(--sans); outline: none;
+    transition: border-color 0.15s;
+  }
+  #req-modal .field input:focus,
+  #req-modal .field textarea:focus { border-color: var(--accent-dim); }
+  #req-modal .field textarea { min-height: 64px; resize: vertical; font-family: var(--mono); font-size: 12px; }
+  #req-modal .field .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  #req-modal .seg-row { display: flex; gap: 16px; align-items: center; }
+  #req-modal .seg {
+    display: inline-flex; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); overflow: hidden;
+  }
+  #req-modal .seg button {
+    background: transparent; border: none; color: var(--muted2);
+    padding: 7px 14px; font-size: 12px; font-family: var(--sans); cursor: pointer;
+    border-right: 1px solid var(--border); transition: all 0.12s;
+  }
+  #req-modal .seg button:last-child { border-right: none; }
+  #req-modal .seg button:hover { color: var(--fg); }
+  #req-modal .seg button.active {
+    background: var(--accent); color: #000; font-weight: 600;
+  }
+  #req-modal .pow-progress {
+    margin-top: 14px; display: none;
+  }
+  #req-modal .pow-progress.show { display: block; }
+  #req-modal .pow-bar {
+    height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  #req-modal .pow-fill {
+    height: 100%; width: 0%; background: var(--accent); transition: width 0.2s ease;
+  }
+  #req-modal .pow-text {
+    font-size: 11px; color: var(--muted2); margin-top: 6px; font-family: var(--mono);
+  }
+  #req-modal .pow-text b { color: var(--fg); }
+  #req-modal .pow-notice {
+    font-size: 11px; color: var(--muted); margin-top: 12px; line-height: 1.4;
+  }
+  #req-modal .submit-btn {
+    background: var(--accent); color: #000; padding: 10px 20px;
+    border-radius: var(--radius-sm); font-weight: 600; font-size: 13px;
+    border: none; cursor: pointer; font-family: var(--sans); margin-top: 8px;
+    transition: opacity 0.12s;
+  }
+  #req-modal .submit-btn:hover { opacity: 0.88; }
+  #req-modal .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  #req-modal .npub-line {
+    font-size: 11px; color: var(--muted); margin-top: 10px; font-family: var(--mono);
+    word-break: break-all;
+  }
+  #req-modal .npub-line b { color: var(--muted2); }
+  #req-modal .npub-line .copy-inline {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--muted2);
+    padding: 1px 6px; border-radius: 4px; cursor: pointer; font-size: 10px;
+    font-family: var(--sans); margin-left: 6px;
+  }
+  #req-modal .npub-line .copy-inline:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+  /* === SEEDER SECTION (in torrent modal) === */
+  #modal .seeder-section {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), color-mix(in srgb, var(--amber) 8%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: var(--radius);
+    padding: 16px; margin-bottom: 16px;
+  }
+  #modal .seeder-head {
+    font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 4px;
+  }
+  #modal .seeder-sub { font-size: 12px; color: var(--muted2); margin-bottom: 12px; line-height: 1.4; }
+  #modal .seeder-btn {
+    background: var(--accent); color: #000; padding: 8px 16px;
+    border-radius: var(--radius-sm); font-weight: 600; font-size: 12px;
+    border: none; cursor: pointer; font-family: var(--sans);
+    transition: all 0.12s;
+  }
+  #modal .seeder-btn:hover { opacity: 0.88; }
+  #modal .seeder-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* === SEEDER MODAL === */
+  #seeder-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    justify-content: center; align-items: flex-start; padding: 40px 20px;
+    overflow-y: auto;
+  }
+  #seeder-overlay.show { display: flex; }
+  #seeder-modal {
+    background: var(--surface); border: 1px solid var(--border-hi);
+    border-radius: var(--radius); max-width: 560px; width: 100%;
+    padding: 24px; position: relative; margin: auto 0;
+  }
+  #seeder-modal .modal-close {
+    position: absolute; top: 16px; right: 18px; cursor: pointer;
+    color: var(--muted); font-size: 22px; line-height: 1;
+    background: none; border: none; font-family: var(--sans);
+  }
+  #seeder-modal .modal-close:hover { color: var(--fg); }
+  #seeder-modal h2 {
+    font-size: 17px; font-weight: 700; margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  #seeder-modal .req-intro {
+    font-size: 13px; color: var(--muted2); margin-bottom: 16px; line-height: 1.5;
+    font-weight: 600;
+  }
+  #seeder-modal .seeder-explain {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px; margin-bottom: 16px;
+  }
+  #seeder-modal .seeder-explain p {
+    font-size: 13px; color: var(--muted2); line-height: 1.6; margin-bottom: 10px;
+  }
+  #seeder-modal .seeder-explain p:last-child { margin-bottom: 0; }
+  #seeder-modal .seeder-explain strong { color: var(--fg); font-weight: 600; }
+  #seeder-modal .pow-progress { margin-top: 14px; display: none; }
+  #seeder-modal .pow-progress.show { display: block; }
+  #seeder-modal .pow-bar {
+    height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  #seeder-modal .pow-fill {
+    height: 100%; width: 0%; background: var(--accent); transition: width 0.2s ease;
+  }
+  #seeder-modal .pow-text {
+    font-size: 11px; color: var(--muted2); margin-top: 6px; font-family: var(--mono);
+  }
+  #seeder-modal .pow-text b { color: var(--fg); }
+  #seeder-modal .submit-btn {
+    background: var(--accent); color: #000; padding: 10px 20px;
+    border-radius: var(--radius-sm); font-weight: 600; font-size: 13px;
+    border: none; cursor: pointer; font-family: var(--sans); margin-top: 8px;
+    transition: opacity 0.12s;
+  }
+  #seeder-modal .submit-btn:hover { opacity: 0.88; }
+  #seeder-modal .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  @media (max-width: 600px) {
+    header { padding: 20px 16px 14px; }
+    #toolbar { padding: 12px 16px; }
+    #content { padding: 12px 16px 32px; }
+    #grid { grid-template-columns: 1fr; }
+  }
+
+  #add-torrent-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--fg);
+    padding: 8px 14px; border-radius: var(--radius-sm); font-size: 12px;
+    font-family: var(--sans); cursor: pointer; white-space: nowrap;
+    transition: all 0.12s;
+  }
+  #add-torrent-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+  #add-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    justify-content: center; align-items: flex-start; padding: 40px 20px;
+    overflow-y: auto;
+  }
+  #add-overlay.show { display: flex; }
+  #add-modal {
+    background: var(--surface); border: 1px solid var(--border-hi);
+    border-radius: var(--radius); max-width: 620px; width: 100%;
+    padding: 24px; position: relative; margin: auto 0;
+  }
+  #add-modal .modal-close {
+    position: absolute; top: 16px; right: 18px; cursor: pointer;
+    color: var(--muted); font-size: 22px; line-height: 1;
+    background: none; border: none; font-family: var(--sans);
+  }
+  #add-modal .modal-close:hover { color: var(--fg); }
+  #add-modal h2 {
+    font-size: 17px; font-weight: 700; margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  #add-modal .req-intro {
+    font-size: 12px; color: var(--muted2); margin-bottom: 16px; line-height: 1.5;
+  }
+  #add-modal .field { margin-bottom: 14px; }
+  #add-modal .field label {
+    display: block; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px;
+    font-weight: 600;
+  }
+  #add-modal .field label .req { color: var(--red); margin-left: 2px; }
+  #add-modal .field label .opt { color: var(--muted); margin-left: 2px; font-weight: 400; text-transform: none; }
+  #add-modal .field input,
+  #add-modal .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    color: var(--fg); padding: 8px 12px; border-radius: var(--radius-sm);
+    font-size: 13px; font-family: var(--sans); outline: none;
+    transition: border-color 0.15s;
+  }
+  #add-modal .field input:focus,
+  #add-modal .field textarea:focus { border-color: var(--accent-dim); }
+  #add-modal .field textarea { min-height: 64px; resize: vertical; font-family: var(--mono); font-size: 12px; }
+  #add-modal .field .hint { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+  #add-modal .field .hint strong { color: var(--amber); font-weight: 600; }
+  #add-modal .upload-note {
+    background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3);
+    border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px;
+    font-size: 12px; color: var(--muted2); line-height: 1.5;
+  }
+  #add-modal .upload-note strong { color: var(--amber); font-weight: 600; }
+  #add-modal .upload-note a { color: var(--accent); }
+  #add-modal .seg-row { display: flex; gap: 16px; align-items: center; }
+  #add-modal .seg {
+    display: inline-flex; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); overflow: hidden;
+  }
+  #add-modal .seg button {
+    background: transparent; border: none; color: var(--muted2);
+    padding: 7px 14px; font-size: 12px; font-family: var(--sans); cursor: pointer;
+    border-right: 1px solid var(--border); transition: all 0.12s;
+  }
+  #add-modal .seg button:last-child { border-right: none; }
+  #add-modal .seg button:hover { color: var(--fg); }
+  #add-modal .seg button.active {
+    background: var(--accent); color: #000; font-weight: 600;
+  }
+  #add-modal .pow-progress { margin-top: 14px; display: none; }
+  #add-modal .pow-progress.show { display: block; }
+  #add-modal .pow-bar {
+    height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  #add-modal .pow-fill {
+    height: 100%; width: 0%; background: var(--accent); transition: width 0.2s ease;
+  }
+  #add-modal .pow-text {
+    font-size: 11px; color: var(--muted2); margin-top: 6px; font-family: var(--mono);
+  }
+  #add-modal .pow-text b { color: var(--fg); }
+  #add-modal .pow-notice {
+    font-size: 11px; color: var(--muted); margin-top: 12px; line-height: 1.4;
+  }
+  #add-modal .submit-btn {
+    background: var(--accent); color: #000; padding: 10px 20px;
+    border-radius: var(--radius-sm); font-weight: 600; font-size: 13px;
+    border: none; cursor: pointer; font-family: var(--sans); margin-top: 8px;
+    transition: opacity 0.12s;
+  }
+  #add-modal .submit-btn:hover { opacity: 0.88; }
+  #add-modal .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<div id="banner">
+  <span class="msg"></span>
+  <a class="btn open-link" href="#" target="_blank">Open</a>
+  <a class="btn btn-secondary dl-link-btn" href="#" download>Download</a>
+  <button class="close" onclick="document.getElementById('banner').classList.remove('show')">&times;</button>
+</div>
+
+<header>
+  <div class="top">
+    <h1 id="title" onclick="cycleAccent()">waifu-magnet <span class="ver-badge">v<span id="ver">12</span></span> <span class="aka">a.k.a llama.garden</span></h1>
+    <div class="stats">
+      <span class="stat"><span class="dot" id="conn-dot"></span><b id="relay-count">0</b>/<span id="relay-total">0</span> relays</span>
+      <span class="stat"><b id="torrent-count">0</b> torrents</span>
+      <span class="stat"><b id="total-size">0 B</b> total</span>
+    </div>
+  </div>
+</header>
+
+<div id="toolbar">
+  <div id="search-wrap">
+    <input type="text" id="search" placeholder="Filter by name, hash, source…" autocomplete="off">
+  </div>
+  <div class="toolbar-actions">
+    <button id="req-btn">Request a model</button>
+    <button id="add-torrent-btn">Add a torrent</button>
+    <select id="sort">
+      <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="largest">Largest first</option>
+      <option value="smallest">Smallest first</option>
+      <option value="name">Name (A–Z)</option>
+    </select>
+    <span id="filter-count"></span>
+  </div>
+</div>
+
+<div id="toggles">
+  <div class="toggle-group">
+    <span class="tg-label">Format</span>
+    <div class="seg" id="seg-format">
+      <button data-val="all" class="active">All</button>
+      <button data-val="safetensors">Safetensors</button>
+      <button data-val="quants">Quants</button>
+    </div>
+  </div>
+  <div class="toggle-group">
+    <span class="tg-label">Type</span>
+    <div class="seg" id="seg-type">
+      <button data-val="all" class="active">All</button>
+      <button data-val="base">Base</button>
+      <button data-val="fine tune">Fine-tune</button>
+    </div>
+  </div>
+</div>
+
+<div id="content">
+  <div id="grid"></div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div class="modal-name" id="modal-name"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div id="req-overlay">
+  <div id="req-modal">
+    <button class="modal-close" onclick="closeReqModal()">&times;</button>
+    <h2>Request a model</h2>
+    <p class="req-intro">Want a model added to the listings? Fill out this form to show your interest. We or someone else may or may not add it — no guarantees, just signal.</p>
+    <div class="field">
+      <label>Model name <span class="req">*</span></label>
+      <input type="text" id="req-name" placeholder="e.g. Qwen3-Next-80B-A3B">
+    </div>
+    <div class="field">
+      <label>Links (one per line)</label>
+      <textarea id="req-links" placeholder="https://huggingface.co/Qwen/Qwen3-Next-80B-A3B&#10;https://huggingface.co/..."></textarea>
+      <div class="hint">HuggingFace URLs preferred; any link accepted.</div>
+    </div>
+    <div class="field">
+      <label>Type</label>
+      <div class="seg-row">
+        <div class="seg" id="req-seg-type">
+          <button data-val="all" class="active">All</button>
+          <button data-val="base">Base</button>
+          <button data-val="quant">Quant</button>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>VRAM (GB)</label>
+      <input type="number" id="req-vram" min="0" step="1" placeholder="e.g. 24">
+      <div class="hint">How much VRAM you have to run the model.</div>
+    </div>
+    <div class="pow-progress" id="pow-progress">
+      <div class="pow-bar"><div class="pow-fill" id="pow-fill"></div></div>
+      <div class="pow-text" id="pow-text"></div>
+    </div>
+    <div class="pow-notice" id="pow-notice">To combat spam, your computer will mine a small proof-of-work for ~10 seconds before publishing. Your CPU will be busy during that time.</div>
+    <button class="submit-btn" id="req-submit" onclick="submitRequest()">Submit request</button>
+  </div>
+</div>
+
+<div id="seeder-overlay">
+  <div id="seeder-modal">
+    <button class="modal-close" onclick="closeSeederModal()">&times;</button>
+    <h2>Request seeders</h2>
+    <p class="req-intro" id="seeder-model-name">for this model</p>
+    <div class="seeder-explain">
+      <p>You are signaling that this torrent has <strong>no seeders</strong> — you can't download the files. This lets other users (and us) know there is seeder demand for this model.</p>
+      <p>Click the button below and your computer will mine a <strong>proof-of-work</strong> for about <strong>10 seconds</strong>. This combats spam: it makes it costly to flood the network with fake requests, so a real seeder demand signal stays meaningful. Your CPU will be busy during that time — keep this tab open.</p>
+      <p>After the 10 seconds are up, the result is published to the Nostr relays so anyone watching can see the demand.</p>
+    </div>
+    <div class="pow-progress" id="seeder-pow-progress">
+      <div class="pow-bar"><div class="pow-fill" id="seeder-pow-fill"></div></div>
+      <div class="pow-text" id="seeder-pow-text"></div>
+    </div>
+    <button class="submit-btn" id="seeder-submit" onclick="requestSeeders()">Start — mine for 10 seconds</button>
+  </div>
+</div>
+
+<div id="add-overlay">
+  <div id="add-modal">
+    <button class="modal-close" onclick="closeAddModal()">&times;</button>
+    <h2>Add a torrent</h2>
+    <p class="req-intro">Fill out the form to publish a kind 30099 torrent listing to Nostr so others can find and download the model.</p>
+    <div class="upload-note">
+      <strong>You must upload your .torrent file somewhere first.</strong> This form only collects a URL pointing to it — it does not host the file. A free, easy option: <a href="https://nostr.download" target="_blank">nostr.download</a>, or any public HTTP server. Paste the direct download URL below.
+    </div>
+    <div class="field">
+      <label>.torrent file URL <span class="req">*</span></label>
+      <input type="text" id="add-url" placeholder="https://nostr.download/...">
+      <div class="hint">Direct link to the uploaded <strong>.torrent</strong> file.</div>
+    </div>
+    <div class="field">
+      <label>Model name <span class="req">*</span></label>
+      <input type="text" id="add-name" placeholder="e.g. Qwen3-Next-80B-A3B">
+      <div class="hint">Human-readable display name for the torrent.</div>
+    </div>
+    <div class="field">
+      <label>HuggingFace link <span class="opt">(strongly suggested)</span></label>
+      <input type="text" id="add-hf" placeholder="https://huggingface.co/Qwen/Qwen3-Next-80B-A3B">
+      <div class="hint">The HF repo this torrent mirrors, if applicable.</div>
+    </div>
+    <div class="field">
+      <label>Approximate size (GB)</label>
+      <input type="number" id="add-size" min="0" step="0.1" placeholder="e.g. 16">
+      <div class="hint">Approximate total size of the torrent contents in gigabytes.</div>
+    </div>
+    <div class="field">
+      <label>File class</label>
+      <div class="seg-row">
+        <div class="seg" id="add-seg-class">
+          <button data-val="base">Base</button>
+          <button data-val="fine tune">Fine-tune</button>
+          <button data-val="quant">Quant</button>
+          <button data-val="n/a" class="active">N/A</button>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Model kind</label>
+      <div class="seg-row">
+        <div class="seg" id="add-seg-kind">
+          <button data-val="base">Base</button>
+          <button data-val="fine tune">Fine-tune</button>
+          <button data-val="n/a" class="active">N/A</button>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Lab <span class="opt">(optional)</span></label>
+      <input type="text" id="add-lab" placeholder="e.g. Qwen">
+    </div>
+    <div class="field">
+      <label>Quant format <span class="opt">(if quant)</span></label>
+      <input type="text" id="add-quant-type" placeholder="e.g. GGUF, AWQ, EXL2">
+    </div>
+    <div class="field">
+      <label>Which client or tool did you use to make the torrent? <span class="opt">(optional)</span></label>
+      <input type="text" id="add-client-tool" placeholder="e.g. qBittorrent, Transmission, mktorrent">
+      <div class="hint">What software created the <strong>.torrent</strong> file.</div>
+    </div>
+    <div class="field">
+      <label>Does the torrent match the HuggingFace repo exactly?</label>
+      <div class="seg-row">
+        <div class="seg" id="add-seg-match">
+          <button data-val="yes" class="active">Yes — exact match</button>
+          <button data-val="no">No — differs</button>
+          <button data-val="unknown">Not sure</button>
+        </div>
+      </div>
+    </div>
+    <div class="pow-notice">Before publishing, your computer will mine a proof-of-work for <strong>~10 seconds</strong> to combat spam. Your CPU will be busy during that time — keep this tab open.</div>
+    <button class="submit-btn" id="add-submit" onclick="submitAddTorrent()">Publish torrent listing</button>
+    <div class="pow-progress" id="add-pow-progress">
+      <div class="pow-bar"><div class="pow-fill" id="add-pow-fill"></div></div>
+      <div class="pow-text" id="add-pow-text"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+// === CONFIG ===
+const VERSION = "16";
+
+// === ACCENT COLOR TOGGLE ===
+const ACCENTS = [
+  { name: "pink",   accent: "#e879f9", dim: "#a21caf" },
+  { name: "cyan",   accent: "#22d3ee", dim: "#0e7490" },
+  { name: "green",  accent: "#34d399", dim: "#059669" },
+  { name: "amber",  accent: "#fbbf24", dim: "#d97706" },
+  { name: "blue",   accent: "#60a5fa", dim: "#2563eb" },
+  { name: "red",    accent: "#f87171", dim: "#dc2626" },
+  { name: "violet", accent: "#a78bfa", dim: "#7c3aed" },
+];
+let accentIdx = 4;
+function cycleAccent() {
+  accentIdx = (accentIdx + 1) % ACCENTS.length;
+  applyAccent();
+}
+function applyAccent() {
+  const a = ACCENTS[accentIdx];
+  const root = document.documentElement;
+  root.style.setProperty("--accent", a.accent);
+  root.style.setProperty("--accent-dim", a.dim);
+}
+applyAccent();
+const NPUBS = [
+  "npub1zyal4wt4f86rlgxwjzkmdmcr70ejee66z7crfmy5dpxyentzc0zsspedcr",
+  "npub1wajfudpyx3xudgrglj8jjfjnxmvyk2u0j3yknpsfss6z04rgcdqs7g50e5",
+];
+const RELAYS = [
+  "wss://nos.lol/",
+  "wss://nostr-01.yakihonne.com/",
+  "wss://nostr.mom/",
+  "wss://relay.damus.io/",
+  "wss://relay.primal.net/",
+  "wss://relay.snort.social",
+  "wss://relay.mostr.pub",
+  "wss://no.str.cr",
+  "wss://offchain.pub",
+];
+const TORRENT_KIND = 30099;
+const CLIENT_KIND = 30100;
+const REQUEST_KIND = 30103;
+const SEEDER_KIND = 30102;
+const TRUSTING_RELAY = "wss://nostr.mom/";
+
+// === FAST SCHNORR VERIFICATION (@noble/curves, loaded from CDN) ===
+// Loads a highly optimized secp256k1 library from esm.sh at startup.
+// If it loads, all Schnorr checks use it (fast path).
+// If the CDN is unreachable, we switch to "trusting mode": connect only to
+// a single reliable relay (nostr.mom) and skip client-side signature
+// verification, trusting that relay's authors-filter instead.
+let _fastSchnorrVerify = null;
+let _fastSchnorrSign = null;
+let _fastGetPublicKey = null;
+let trustMode = false;
+let _fastLibReady = (async () => {
+  try {
+    const mod = await import("https://esm.sh/@noble/curves@1.8.1/es2022/secp256k1.bundle.mjs");
+    if (mod && mod.schnorr && typeof mod.schnorr.verify === "function") {
+      _fastSchnorrVerify = mod.schnorr.verify;
+      _fastSchnorrSign = mod.schnorr.sign;
+      _fastGetPublicKey = mod.schnorr.getPublicKey;
+      console.log("[nostr] loaded @noble/curves schnorr verifier (fast path)");
+      return true;
+    }
+  } catch (e) {
+    console.warn("[nostr] could not load @noble/curves:", e.message);
+  }
+  return false;
+})();
+
+// === BECH32 DECODER (npub -> hex) ===
+const BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+function bech32Decode(s) {
+  s = s.toLowerCase();
+  const pos = s.lastIndexOf("1");
+  if (pos < 1 || pos + 7 > s.length) return null;
+  const hrp = s.slice(0, pos);
+  const dataPart = s.slice(pos + 1);
+  let values = [];
+  for (const c of dataPart) {
+    const idx = BECH32_CHARSET.indexOf(c);
+    if (idx < 0) return null;
+    values.push(idx);
+  }
+  const chkHrp = hrpExpand(hrp);
+  const allData = chkHrp.concat(values);
+  if (!verifyChecksum(allData)) return null;
+  const dataBytes = values.slice(0, values.length - 6);
+  const decoded = convertBits(dataBytes, 5, 8, false);
+  if (!decoded) return null;
+  return decoded.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+function hrpExpand(hrp) {
+  let ret = [];
+  for (const c of hrp) ret.push(c.charCodeAt(0) >> 5);
+  ret.push(0);
+  for (const c of hrp) ret.push(c.charCodeAt(0) & 31);
+  return ret;
+}
+function polymod(values) {
+  const GEN = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+  let chk = 1;
+  for (const v of values) {
+    const b = chk >> 25;
+    chk = ((chk & 0x1ffffff) << 5) ^ v;
+    for (let i = 0; i < 5; i++) {
+      if (((b >> i) & 1)) chk ^= GEN[i];
+    }
+  }
+  return chk;
+}
+function verifyChecksum(data) { return polymod(data) === 1; }
+function convertBits(data, fromBits, toBits, pad) {
+  let acc = 0, bits = 0, ret = [];
+  const maxv = (1 << toBits) - 1;
+  const maxAcc = (1 << (fromBits + toBits - 1)) - 1;
+  for (const v of data) {
+    if (v < 0 || (v >> fromBits) !== 0) return null;
+    acc = ((acc << fromBits) | v) & maxAcc;
+    bits += fromBits;
+    while (bits >= toBits) {
+      bits -= toBits;
+      ret.push((acc >> bits) & maxv);
+    }
+  }
+  if (pad) {
+    if (bits) ret.push((acc << (toBits - bits)) & maxv);
+  } else if (bits >= fromBits || ((acc << (toBits - bits)) & maxv)) {
+    return null;
+  }
+  return ret;
+}
+function bech32Encode(hrp, bytes) {
+  const dataBytes = convertBits(Array.from(bytes), 8, 5, true);
+  if (!dataBytes) return null;
+  const chkHrp = hrpExpand(hrp);
+  const values = chkHrp.concat(dataBytes);
+  const checksum = createChecksum(values);
+  const allData = dataBytes.concat(checksum);
+  let out = hrp + "1";
+  for (const v of allData) out += BECH32_CHARSET[v];
+  return out;
+}
+function createChecksum(values) {
+  const enc = values.concat([0, 0, 0, 0, 0, 0]);
+  const mod = polymod(enc) ^ 1;
+  const ret = [];
+  for (let i = 0; i < 6; i++) ret.push((mod >> (5 * (5 - i))) & 31);
+  return ret;
+}
+
+// === BIP-340 SCHNORR SIGNATURE VERIFIER (pure JS, no external deps) ===
+// Verifies Nostr event signatures client-side so a malicious/compromised relay
+// cannot forge events attributed to the whitelisted npub. Without this, the
+// relay-side `authors` filter is the ONLY thing guarding the update channel,
+// and any relay can ignore the filter and push forged kind 30099/30100 events.
+// secp256k1 over Jacobian coordinates using BigInt; SHA-256 via crypto.subtle.
+const _PC  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn;
+const _NC  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;
+const _GX  = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n;
+const _GY  = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n;
+const _BC  = 7n;
+
+function _mod(a, m) { const r = a % m; return r < 0n ? r + m : r; }
+function _modPow(a, e, m) {
+  a = _mod(a, m); let r = 1n;
+  while (e > 0n) { if (e & 1n) r = (r * a) % m; a = (a * a) % m; e >>= 1n; }
+  return r;
+}
+// Binary extended Euclidean modular inverse — far faster than Fermat modPow.
+function _modInv(a, m) {
+  let u = _mod(a, m), v = m, x1 = 1n, x2 = 0n;
+  while (u !== 1n) {
+    while ((u & 1n) === 0n) { u >>= 1n; x1 = (x1 & 1n) === 0n ? x1 >> 1n : (x1 + m) >> 1n; }
+    while ((v & 1n) === 0n) { v >>= 1n; x2 = (x2 & 1n) === 0n ? x2 >> 1n : (x2 + m) >> 1n; }
+    if (u >= v) { u -= v; x1 -= x2; } else { v -= u; x2 -= x1; }
+  }
+  return _mod(x1, m);
+}
+
+// Jacobian point: [X, Y, Z]; infinity = null.
+function _jDbl(P) {
+  if (P === null) return null;
+  const X1 = P[0], Y1 = P[1], Z1 = P[2];
+  if (Y1 === 0n || Z1 === 0n) return null;
+  const A = (X1 * X1) % _PC;
+  const B = (Y1 * Y1) % _PC;
+  const C = (B * B) % _PC;
+  const D = (2n * _mod(((X1 + B) * (X1 + B)) % _PC - A - C, _PC)) % _PC;
+  const E = (3n * A) % _PC;
+  const F = (E * E) % _PC;
+  const X3 = _mod(F - 2n * D, _PC);
+  const Y3 = _mod(E * (D - X3) - 8n * C, _PC);
+  const Z3 = (2n * Y1 * Z1) % _PC;
+  return [X3, Y3, Z3];
+}
+// Jacobian + affine (x2, y2).
+function _jAddAff(P, x2, y2) {
+  if (P === null) return [x2, y2, 1n];
+  const X1 = P[0], Y1 = P[1], Z1 = P[2];
+  if (Z1 === 0n) return [x2, y2, 1n];
+  const Z1Z1 = (Z1 * Z1) % _PC;
+  const U2 = (x2 * Z1Z1) % _PC;
+  const S2 = (y2 * Z1 * Z1Z1) % _PC;
+  if (X1 === U2) return (Y1 === S2) ? _jDbl(P) : null;
+  const H = _mod(U2 - X1, _PC);
+  const HH = (H * H) % _PC;
+  const HHH = (H * HH) % _PC;
+  const R = _mod(S2 - Y1, _PC);
+  const X1HH = (X1 * HH) % _PC;
+  const X3 = _mod(R * R - HHH - 2n * X1HH, _PC);
+  const Y3 = _mod(R * (X1HH - X3) - Y1 * HHH, _PC);
+  const Z3 = (Z1 * H) % _PC;
+  return [X3, Y3, Z3];
+}
+// Jacobian + Jacobian.
+function _jAdd(P, Q) {
+  if (P === null) return Q;
+  if (Q === null) return P;
+  const X1 = P[0], Y1 = P[1], Z1 = P[2];
+  const X2 = Q[0], Y2 = Q[1], Z2 = Q[2];
+  if (Z1 === 0n) return Q;
+  if (Z2 === 0n) return P;
+  const Z1Z1 = (Z1 * Z1) % _PC;
+  const Z2Z2 = (Z2 * Z2) % _PC;
+  const U1 = (X1 * Z2Z2) % _PC;
+  const U2 = (X2 * Z1Z1) % _PC;
+  const S1 = (Y1 * Z2 * Z2Z2) % _PC;
+  const S2 = (Y2 * Z1 * Z1Z1) % _PC;
+  if (U1 === U2) return (S1 === S2) ? _jDbl(P) : null;
+  const H = _mod(U2 - U1, _PC);
+  const HH = (H * H) % _PC;
+  const HHH = (H * HH) % _PC;
+  const R = _mod(S2 - S1, _PC);
+  const U1HH = (U1 * HH) % _PC;
+  const X3 = _mod(R * R - HHH - 2n * U1HH, _PC);
+  const Y3 = _mod(R * (U1HH - X3) - S1 * HHH, _PC);
+  const Z3 = (Z1 * Z2 * H) % _PC;
+  return [X3, Y3, Z3];
+}
+function _jMul(k, x, y) {
+  k = _mod(k, _NC);
+  if (k === 0n) return null;
+  let R = null;
+  const bits = k.toString(2);
+  for (let i = 0; i < bits.length; i++) {
+    R = _jDbl(R);
+    if (bits.charCodeAt(i) === 49) R = _jAddAff(R, x, y); // '1'
+  }
+  return R;
+}
+function _jAffine(P) {
+  if (P === null) return null;
+  const X = P[0], Y = P[1], Z = P[2];
+  if (Z === 0n) return null;
+  const Zi = _modInv(Z, _PC);
+  const Zi2 = (Zi * Zi) % _PC;
+  return [(X * Zi2) % _PC, (Y * Zi2 * Zi) % _PC];
+}
+// Lift x-coordinate to a point with even Y (BIP-340), or null if no valid point.
+function _liftX(x) {
+  if (x === 0n || x >= _PC) return null;
+  const c = _mod(x * x * x + _BC, _PC); // a = 0
+  const y = _modPow(c, (_PC + 1n) >> 2n, _PC);
+  if ((y * y) % _PC !== c) return null;
+  return (y & 1n) ? [x, _PC - y] : [x, y];
+}
+
+function _hexBytes(hex) {
+  const a = new Uint8Array(hex.length >> 1);
+  for (let i = 0; i < a.length; i++) a[i] = parseInt(hex.substr(i << 1, 2), 16);
+  return a;
+}
+function _bToI(b) { let v = 0n; for (let i = 0; i < b.length; i++) v = (v << 8n) | BigInt(b[i]); return v; }
+function _bToHex(b) { let s = ""; for (let i = 0; i < b.length; i++) s += b[i].toString(16).padStart(2, "0"); return s; }
+function _cat(a, b) { const r = new Uint8Array(a.length + b.length); r.set(a, 0); r.set(b, a.length); return r; }
+
+async function _taggedHash(tag, msg) {
+  const te = new TextEncoder();
+  const th = new Uint8Array(await crypto.subtle.digest("SHA-256", te.encode(tag)));
+  return new Uint8Array(await crypto.subtle.digest("SHA-256", _cat(_cat(th, th), msg)));
+}
+async function _eventHash(ev) {
+  const s = JSON.stringify([0, ev.pubkey, ev.created_at, ev.kind, ev.tags, ev.content]);
+  return _bToHex(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s))));
+}
+
+// BIP-340 verify: true iff (sig, pubX, msg) is a valid Schnorr signature.
+async function _verifySchnorr(sigHex, pubXHex, msgHex) {
+  if (sigHex.length !== 128 || pubXHex.length !== 64 || msgHex.length !== 64) return false;
+  const sig = _hexBytes(sigHex), pub = _hexBytes(pubXHex), msg = _hexBytes(msgHex);
+  const r = _bToI(sig.subarray(0, 32));
+  const s = _bToI(sig.subarray(32, 64));
+  if (r >= _PC || s >= _NC) return false;
+  const P = _liftX(_bToI(pub));
+  if (P === null) return false;
+  // BIP-340 challenge: e = tagged_hash("BIP0340/challenge", R.x || P.x || m)
+  // R.x = sig[0:32]; Nostr signs the event-id hash using standard BIP-340.
+  const e = _bToI(await _taggedHash("BIP0340/challenge", _cat(_cat(sig.subarray(0, 32), pub), msg))) % _NC;
+  // R = s*G + (N-e)*P
+  const sG = _jMul(s, _GX, _GY);
+  const kP = _jMul(_mod(_NC - e, _NC), P[0], P[1]);
+  const R = _jAffine(_jAdd(sG, kP));
+  if (R === null) return false;
+  if (R[1] & 1n) return false; // R must have even Y
+  return R[0] === r;
+}
+
+// Public: verify a Nostr event against the whitelisted pubkey. Returns true iff
+// ev.pubkey === expectedPubkey AND ev.id === SHA256(canonical serialization)
+// AND the Schnorr signature is valid. Fail-closed on any error.
+async function verifyNostrEvent(ev, expectedPubkeyHex) {
+  if (typeof ev.pubkey !== "string" || ev.pubkey !== expectedPubkeyHex) return false;
+  if (typeof ev.sig !== "string" || ev.sig.length !== 128) return false;
+  if (typeof ev.id !== "string" || ev.id.length !== 64) return false;
+  const m = await _eventHash(ev);
+  if (m !== ev.id) return false;
+  return _verifySchnorr(ev.sig, ev.pubkey, m);
+}
+
+// === HELPERS ===
+function humanSize(bytes) {
+  const b = parseInt(bytes) || 0;
+  if (b < 1024) return b + " B";
+  if (b < 1048576) return (b / 1024).toFixed(1) + " KiB";
+  if (b < 1073741824) return (b / 1048576).toFixed(1) + " MiB";
+  return (b / 1073741824).toFixed(2) + " GiB";
+}
+function shortHash(hex, n) { return hex ? hex.slice(0, n) + "…" : ""; }
+function hostname(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ""); }
+  catch (e) { return url; }
+}
+function tagVal(tags, name) {
+  for (const t of tags) { if (t[0] === name) return t[1]; }
+  return null;
+}
+function tagVals(tags, name) {
+  return tags.filter(t => t[0] === name).map(t => t[1]);
+}
+// Extract enriched model metadata from an event's tags. Returns an object
+// with all known fields (null when absent). Old events (posted by
+// post-torr-nostr.py without enriched tags) yield all-null fields, which
+// the renderer treats as "legacy / unspecified".
+function modelMeta(tags) {
+  return {
+    display_name: tagVal(tags, "display_name"),
+    file_class:   tagVal(tags, "file_class"),
+    model_kind:   tagVal(tags, "model_kind"),
+    quant_type:   tagVal(tags, "quant_type"),
+    quant_dev:    tagVal(tags, "quant_dev"),
+    quant_detail: tagVal(tags, "quant_detail"),
+    quant_bpw:    tagVal(tags, "quant_bpw"),
+    lab:          tagVal(tags, "lab"),
+    model_name:   tagVal(tags, "model_name"),
+    repo_id:      tagVal(tags, "repo_id"),
+    base_model:   tagVal(tags, "base_model"),
+    created_at:   tagVal(tags, "created_at"),
+    version:      tagVal(tags, "version"),
+    commit_sha:   tagVal(tags, "commit_sha"),
+    torrent_size: tagVal(tags, "torrent_size"),
+    torrent_created: tagVal(tags, "torrent_created"),
+  };
+}
+// Resolve the best display title for a torrent: display_name tag, else name
+// tag, else a short infohash prefix.
+function titleOf(tags, meta) {
+  if (meta.display_name) return meta.display_name;
+  const ih = tagVal(tags, "d") || "";
+  return tagVal(tags, "name") || ih.slice(0, 12);
+}
+// Effective model_kind: the fundamental nature of the model (base vs
+// fine-tune), ignoring quantization. Used by the Type toggle to filter
+// quants by what they are a quant OF. Falls back sensibly for events that
+// lack the model_kind tag (e.g. posted before it existed):
+//   base/fine-tune repos -> infer from file_class
+//   quant repos lacking model_kind -> default "base"
+//   legacy (no file_class) -> null (always shown only under all/all)
+function effModelKind(m) {
+  if (m.model_kind) return m.model_kind;
+  if (m.file_class === "base") return "base";
+  if (m.file_class === "fine tune") return "fine tune";
+  if (m.file_class === "quant") return "base"; // default for old quant events
+  return null; // legacy
+}
+function escapeHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+// The magnet NEVER includes &xs= by default. The BEP 9 Exact Source URL
+// (&xs=) is only appended AFTER the .torrent file has been fetched and
+// hash-verified client-side (see verifyAndDownloadTorrent). This prevents a
+// compromised Blossom server from feeding a tampered .torrent to the BT
+// client via xs= without the user knowing.
+function magnetWithSource(magnet, urls) {
+  return magnet || "";
+}
+
+// === TORRENT VERIFICATION (A/B/C) ===
+// When the user clicks a .torrent download link, we intercept and verify
+// the file before letting the browser download it.
+//
+// If the event has an `x` tag (torrent SHA-256, emitted by
+// post-torr-nostr-j.py), we fetch each `url` mirror, hash the bytes, and
+// compare to the signed `x` tag:
+//   - At least one match  → success: download that verified copy (blob URL).
+//                           The verified URL is cached so the magnet can
+//                           later include &xs= pointing to it.
+//   - All mirrors fail     → failure: button turns red "invalid", a warning
+//                           modal appears ("this torrent might be invalid").
+// If there is no `x` tag (old events) → assume Blossom is not misbehaving:
+//   proceed with a normal direct download from the first URL (no hash check).
+//
+// `btnEl`   — the clicked button element (for state changes).
+// `urls`    — array of .torrent URLs from the event's `url` tags.
+// `shaHex`  — expected SHA-256 from the `x` tag, or null if absent.
+// `entry`   — the torrent entry (for showing the warning modal with name).
+async function verifyAndDownloadTorrent(btnEl, urls, shaHex, entry) {
+  if (!urls || !urls.length) return;
+
+  // No signed hash → old event, trust Blossom (open directly).
+  if (!shaHex) {
+    window.open(urls[0], "_blank");
+    return;
+  }
+
+  const originalText = btnEl.textContent;
+  btnEl.classList.add("verifying");
+  btnEl.textContent = "verifying…";
+  btnEl.removeAttribute("href");
+  btnEl.style.pointerEvents = "none";
+
+  const expectedSha = shaHex.toLowerCase();
+  let verifiedUrl = null;
+  let verifiedBuf = null;
+  const failures = [];
+
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) {
+        failures.push(hostname(url) + " HTTP " + resp.status);
+        continue;
+      }
+      const buf = await resp.arrayBuffer();
+      const hashBuf = await crypto.subtle.digest("SHA-256", buf);
+      const hashHex = [...new Uint8Array(hashBuf)].map(b => b.toString(16).padStart(2, "0")).join("");
+      if (hashHex === expectedSha) {
+        verifiedUrl = url;
+        verifiedBuf = buf;
+        break;
+      } else {
+        failures.push(hostname(url) + " " + shortHash(hashHex, 8));
+      }
+    } catch (e) {
+      failures.push(hostname(url) + " " + (e.message || "fetch failed"));
+    }
+  }
+
+  btnEl.classList.remove("verifying");
+  btnEl.style.pointerEvents = "";
+
+  if (verifiedBuf !== null) {
+    // Success: download the verified copy via a blob URL.
+    const blob = new Blob([verifiedBuf], { type: "application/x-bittorrent" });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = (entry ? (titleOf(entry.event.tags, entry.meta || modelMeta(entry.event.tags)) || "model") : "model") + ".torrent";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 60000);
+
+    // Cache the verified URL so the magnet can include &xs= for this entry.
+    if (entry) entry.verifiedUrl = verifiedUrl;
+
+    btnEl.textContent = "verified ✓";
+    setTimeout(function() { btnEl.textContent = originalText; }, 2000);
+  } else {
+    // All mirrors failed: mark invalid and warn.
+    btnEl.classList.add("invalid");
+    btnEl.textContent = "invalid";
+    showTorrentWarning(entry, failures);
+  }
+}
+
+// Show a modal warning that the torrent might be invalid (all mirrors
+// failed hash verification).
+function showTorrentWarning(entry, failures) {
+  const name = entry ? titleOf(entry.event.tags, entry.meta || modelMeta(entry.event.tags)) : "this model";
+  document.getElementById("modal-name").textContent = "Torrent may be invalid";
+  document.getElementById("modal-body").innerHTML =
+    '<div class="torrent-warning">' +
+      '<div class="tw-head">⚠ Verification failed for all mirrors</div>' +
+      '<div class="tw-body">The .torrent file downloaded from every mirror does NOT match the ' +
+      'SHA-256 hash signed in this listing. This means one or more Blossom servers may have ' +
+      'served a tampered or corrupted file. <strong>Do not open the .torrent file.</strong></div>' +
+    '</div>' +
+    '<div class="section"><div class="label">Model</div><div class="val">' + escapeHtml(name) + '</div></div>' +
+    '<div class="section"><div class="label">Failures</div><div class="val mono-sm">' + escapeHtml(failures.join("; ")) + '</div></div>' +
+    '<div class="section"><div class="label">What to do</div><div class="val prose">Try again later, or contact the listing author. ' +
+      'The signed SHA-256 hash in the Nostr event is correct, but no mirror currently serves a file matching it.</div></div>';
+  document.getElementById("modal-overlay").classList.add("show");
+}
+window.showTorrentWarning = showTorrentWarning;
+
+// Build a magnet URI with &xs= pointing to a verified URL only.
+// Called when the user wants the magnet and verification has already
+// succeeded (entry.verifiedUrl is set).
+function magnetWithVerifiedSource(magnet, entry) {
+  if (!magnet) return "";
+  if (!entry || !entry.verifiedUrl) return magnet;
+  return magnet + "&xs=" + encodeURIComponent(entry.verifiedUrl);
+}
+
+// === STATE ===
+let torrentMap = new Map();
+let relaysConnected = 0;
+let relaysEOSE = 0;
+let relayErrors = 0;
+let searchQuery = "";
+let sortMode = "newest";
+let filterFormat = "all";   // all | safetensors | quants
+let filterType = "all";     // all | base | fine tune
+// Cache of message hashes (== ev.id) whose signatures have already been
+// verified. Avoids re-running the expensive Schnorr check when multiple relays
+// deliver the same event. Keyed by the recomputed hash, not the relay-supplied
+// id, so a forged event claiming a known id is still rejected.
+const verifiedMsgHashes = new Set();
+
+document.getElementById("ver").textContent = VERSION;
+
+// === RENDER ===
+function getFiltered() {
+  let arr = [...torrentMap.values()];
+  // --- multi-word search: every whitespace-separated token must be a
+  // substring of the combined searchable text. "qwen 27b" -> tokens
+  // ["qwen","27b"] -> matches "Qwen3.6-27B". Empty query matches all. ---
+  const tokens = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (tokens.length) {
+    arr = arr.filter(e => {
+      const t = e.event.tags;
+      const m = e.meta || (e.meta = modelMeta(t));
+      const ih = (tagVal(t, "d") || "").toLowerCase();
+      const name = (tagVal(t, "name") || "").toLowerCase();
+      const haystack = [
+        name, ih,
+        (tagVal(t, "source") || "").toLowerCase(),
+        (m.display_name || "").toLowerCase(),
+        (m.quant_detail || "").toLowerCase(),
+        (m.quant_type || "").toLowerCase(),
+        (m.quant_dev || "").toLowerCase(),
+        (m.lab || "").toLowerCase(),
+        (m.model_name || "").toLowerCase(),
+        (m.base_model || "").toLowerCase(),
+        (m.repo_id || "").toLowerCase(),
+      ].join(" \u0001 ");
+      return tokens.every(tok => haystack.indexOf(tok) !== -1);
+    });
+  }
+  // --- toggle filters ---
+  // file_class: "base" | "fine tune" | "quant" | null (legacy).
+  // Legacy events (no file_class tag) are ONLY visible when BOTH format=all
+  // AND type=all.
+  // Format:
+  //   all         -> everything (incl. legacy)
+  //   safetensors -> only new non-quant (file_class base|fine tune)
+  //   quants      -> only new quants (file_class quant)
+  // Type (applies across ALL formats, never grayed-out — quants can be of
+  // base or fine-tune models):
+  //   all         -> everything matching format (incl. legacy)
+  //   base        -> effModelKind === "base" (base repos + quants-of-base)
+  //   fine tune   -> effModelKind === "fine tune" (fine-tunes + quants-of-finetune)
+  arr = arr.filter(e => {
+    const m = e.meta || (e.meta = modelMeta(e.event.tags));
+    const fc = m.file_class;
+    const isLegacy = !fc;
+    // Format gate
+    if (filterFormat === "safetensors") {
+      if (isLegacy || fc === "quant") return false;
+    } else if (filterFormat === "quants") {
+      if (isLegacy || fc !== "quant") return false;
+    }
+    // Type gate
+    if (filterType === "base") {
+      if (isLegacy) return false;
+      if (effModelKind(m) !== "base") return false;
+    } else if (filterType === "fine tune") {
+      if (isLegacy) return false;
+      if (effModelKind(m) !== "fine tune") return false;
+    }
+    return true;
+  });
+  switch (sortMode) {
+    case "oldest":  arr.sort((a,b) => a.created_at - b.created_at); break;
+    case "largest": arr.sort((a,b) => parseInt(tagVal(b.event.tags,"size")||0) - parseInt(tagVal(a.event.tags,"size")||0)); break;
+    case "smallest":arr.sort((a,b) => parseInt(tagVal(a.event.tags,"size")||0) - parseInt(tagVal(b.event.tags,"size")||0)); break;
+    case "name":    arr.sort((a,b) => (titleOf(a.event.tags,a.meta||modelMeta(a.event.tags))).localeCompare(titleOf(b.event.tags,b.meta||modelMeta(b.event.tags)))); break;
+    default:        arr.sort((a,b) => b.created_at - a.created_at);
+  }
+  return arr;
+}
+
+function renderGrid() {
+  const grid = document.getElementById("grid");
+  const filtered = getFiltered();
+  document.getElementById("torrent-count").textContent = torrentMap.size;
+  let total = 0;
+  for (const e of torrentMap.values()) total += parseInt(tagVal(e.event.tags,"size")||0);
+  document.getElementById("total-size").textContent = humanSize(total);
+  const fc = document.getElementById("filter-count");
+  fc.innerHTML = 'showing <b>' + filtered.length + '</b> of <b>' + torrentMap.size + '</b>';
+
+  if (torrentMap.size === 0) {
+    grid.innerHTML = "";
+    return;
+  }
+  grid.innerHTML = "";
+  for (const entry of filtered) {
+    const ev = entry.event;
+    const tags = ev.tags;
+    const m = entry.meta || (entry.meta = modelMeta(tags));
+    const ih = tagVal(tags, "d") || "";
+    const name = titleOf(tags, m);
+    const size = tagVal(tags, "size") || "0";
+    const source = tagVal(tags, "source") || "";
+    const urls = tagVals(tags, "url");
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.onclick = function(e) {
+      if (e.target.closest(".act")) return;
+      openModal(entry);
+    };
+
+    // --- badges for line 3 (class + quant type, no bpw) ---
+    let classBadge = "";
+    if (m.file_class === "base")        classBadge = '<span class="badge base">Base</span>';
+    else if (m.file_class === "fine tune") classBadge = '<span class="badge fineturn">Fine-tune</span>';
+    else if (m.file_class === "quant")  classBadge = '<span class="badge quant">Quant</span>';
+    else                                classBadge = '<span class="badge legacy">legacy</span>';
+    let quantBadge = "";
+    if (m.quant_type) quantBadge = '<span class="badge format">' + escapeHtml(m.quant_type) + (m.quant_detail ? ' · ' + escapeHtml(m.quant_detail) : '') + '</span>';
+
+    card.innerHTML =
+      '<div class="name">' + escapeHtml(name) + '</div>' +
+      '<span class="chevron">›</span>' +
+      '<div class="row-lab-size">' +
+        '<span class="size">' + humanSize(size) + '</span>' +
+        (m.lab ? '<span class="lab">' + escapeHtml(m.lab) + '</span>' : '') +
+      '</div>' +
+      '<div class="row-meta">' +
+        classBadge + quantBadge +
+        (source ? '<a class="hf-btn" href="https://' + escapeHtml(source) + '" target="_blank" onclick="event.stopPropagation()">HF &nearr;</a>' : '') +
+      '</div>' +
+      '<div class="row-actions">' +
+        '<span class="client-note" onclick="showClientModal(); event.stopPropagation();">requires Transmission</span>' +
+        (urls.length
+          ? '<button class="dl-btn" type="button">↓ .torrent</button>'
+          : '<span class="dl-btn disabled">no .torrent</span>') +
+      '</div>';
+    // Wire .torrent download button to hash verification flow.
+    if (urls.length) {
+      const dlBtn = card.querySelector(".dl-btn:not(.disabled)");
+      if (dlBtn) {
+        const xTag = tagVal(tags, "x");
+        (function(u, xh, ent, btn) {
+          btn.addEventListener("click", function(e) {
+            e.stopPropagation();
+            verifyAndDownloadTorrent(btn, u, xh, ent);
+          });
+        })(urls, xTag, entry, dlBtn);
+      }
+    }
+    grid.appendChild(card);
+  }
+  if (searchQuery.trim()) {
+    const rc = document.createElement("div");
+    rc.className = "card request-card";
+    rc.onclick = function() { openReqModal(); document.getElementById("req-name").value = searchQuery.trim(); };
+    rc.innerHTML =
+      '<div class="rc-title">+ Request a model</div>' +
+      '<div class="rc-sub">Can\'t find what you\'re looking for? ' + escapeHtml(searchQuery.trim()) +
+      ' not here yet — submit a request and we\'ll check it out.</div>';
+    grid.appendChild(rc);
+  }
+}
+
+function updateConnStatus() {
+  const dot = document.getElementById("conn-dot");
+  const total = trustMode ? 1 : RELAYS.length;
+  const done = relaysEOSE + relayErrors;
+  document.getElementById("relay-count").textContent = relaysConnected;
+  document.getElementById("relay-total").textContent = total;
+  if (done >= total) {
+    if (relaysConnected > 0) {
+      dot.classList.add("live"); dot.classList.remove("err");
+    } else {
+      dot.classList.add("err"); dot.classList.remove("live");
+    }
+  }
+}
+
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = "copied!";
+    btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove("copied"); }, 1200);
+  });
+}
+window.copyText = copyText;
+
+// === MODAL ===
+let _modalEntry = null;
+function openModal(entry) {
+  _modalEntry = entry;
+  const ev = entry.event;
+  const tags = ev.tags;
+  const m = entry.meta || (entry.meta = modelMeta(tags));
+  const ih = tagVal(tags, "d") || "";
+  const name = titleOf(tags, m);
+  const size = tagVal(tags, "size") || "0";
+  const source = tagVal(tags, "source") || "";
+  const urls = tagVals(tags, "url");
+  const magnet = magnetWithSource(tagVal(tags, "magnet") || "", urls);
+  const webseeds = tagVals(tags, "webseed");
+  const trackers = tagVals(tags, "tracker");
+  const pieces = tagVal(tags, "pieces") || "";
+  const pieceLen = tagVal(tags, "piece_length") || "";
+
+  document.getElementById("modal-name").textContent = name;
+  let html = "";
+
+  // Seeder request entry point: opens a separate modal that explains the
+  // PoW anti-spam measure before mining.
+  html +=
+    '<div class="seeder-section">' +
+      '<div class="seeder-head">No seeders?</div>' +
+      '<div class="seeder-sub">If you can\'t download because there are no seeders, let others know.</div>' +
+      '<button class="seeder-btn" id="seeder-btn" onclick="openSeederModal()">No seeders — request seeders</button>' +
+    '</div>';
+
+  // --- key/value grid: core + enriched fields ---
+  function kv(label, valHtml) {
+    return '<div class="section"><div class="label">' + label + '</div><div class="val">' + valHtml + '</div></div>';
+  }
+  let grid = '<div class="kv-grid">';
+  grid += kv("Infohash", escapeHtml(ih) + ' <span class="copy-inline" onclick="copyText(\'' + ih + '\',this)">copy</span>');
+  if (m.commit_sha) grid += kv("Torrent name (in client)", escapeHtml(m.commit_sha) + ' <span class="copy-inline" onclick="copyText(\'' + escapeHtml(m.commit_sha) + '\',this)">copy</span>');
+  grid += kv("Model size", humanSize(size));
+  if (m.torrent_size) grid += kv(".torrent file size", humanSize(m.torrent_size));
+  if (m.torrent_created) grid += kv(".torrent created", escapeHtml(m.torrent_created));
+  if (source) grid += kv("Source", '<a href="https://' + escapeHtml(source) + '" target="_blank" style="color:var(--accent)">' + escapeHtml(source) + '</a>');
+  if (m.lab)        grid += kv("Lab", escapeHtml(m.lab));
+  if (m.model_name) grid += kv("Model", escapeHtml(m.model_name));
+  if (m.base_model) grid += kv("Base model", escapeHtml(m.base_model));
+  if (m.file_class) {
+    const fcLabel = m.file_class === "fine tune" ? "Fine-tune" : (m.file_class.charAt(0).toUpperCase() + m.file_class.slice(1));
+    grid += kv("Class", escapeHtml(fcLabel));
+  }
+  if (m.model_kind) {
+    const mkLabel = m.model_kind === "fine tune" ? "Fine-tune" : (m.model_kind.charAt(0).toUpperCase() + m.model_kind.slice(1));
+    grid += kv("Model kind", escapeHtml(mkLabel));
+  }
+  if (m.quant_type)   grid += kv("Quant format", escapeHtml(m.quant_type));
+  if (m.quant_detail) grid += kv("Quant detail", escapeHtml(m.quant_detail));
+  if (m.quant_bpw)    grid += kv("Est. bits/weight", escapeHtml(String(m.quant_bpw)));
+  if (m.quant_dev)    grid += kv("Quantized by", escapeHtml(m.quant_dev));
+  if (m.repo_id)      grid += kv("Repo ID", escapeHtml(m.repo_id));
+  if (m.version)      grid += kv("Revision", escapeHtml(m.version));
+  if (m.created_at)   grid += kv("Model created", escapeHtml(m.created_at));
+  if (pieces || pieceLen) grid += kv("Pieces", escapeHtml(pieces) + ' pieces &middot; ' + humanSize(pieceLen) + ' each');
+  grid += '</div>';
+  html += grid;
+
+  if (urls.length) {
+    html += '<div class="section"><div class="label">.torrent files (' + urls.length + ')</div><div class="pill-row" id="modal-pill-row">';
+    for (const u of urls) html += '<span class="pill" data-url="' + escapeHtml(u) + '" style="cursor:pointer">' + escapeHtml(hostname(u)) + '</span>';
+    html += '</div></div>';
+  }
+  if (webseeds.length) {
+    html += '<div class="section"><div class="label">Webseeds (' + webseeds.length + ')</div><div class="pill-row">';
+    for (const ws of webseeds) html += '<span class="pill">' + escapeHtml(ws) + '</span>';
+    html += '</div></div>';
+  }
+  if (trackers.length) {
+    html += '<div class="section"><div class="label">Trackers (' + trackers.length + ')</div><div class="pill-row">';
+    for (const tr of trackers) html += '<span class="pill">' + escapeHtml(tr) + '</span>';
+    html += '</div></div>';
+  }
+  html += '';
+  document.getElementById("modal-body").innerHTML = html;
+  // Wire .torrent pills to hash verification flow.
+  const pillRow = document.getElementById("modal-pill-row");
+  if (pillRow && _modalEntry) {
+    const xTag = tagVal(tags, "x");
+    pillRow.querySelectorAll(".pill[data-url]").forEach(function(pill) {
+      const u = pill.dataset.url;
+      pill.addEventListener("click", function() {
+        verifyAndDownloadTorrent(pill, [u], xTag, _modalEntry);
+      });
+    });
+  }
+  document.getElementById("modal-overlay").classList.add("show");
+}
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("show");
+}
+window.closeModal = closeModal;
+function showClientModal() {
+  document.getElementById("modal-name").textContent = "Requires Transmission";
+  document.getElementById("modal-body").innerHTML =
+    '<div class="section"><div class="val prose">Requires Transmission client to fetch from webseeds, if there are no seeders. But if there are seeders any client should work.</div></div>' +
+    '<div class="section"><a href="https://transmissionbt.com/" target="_blank" style="color:var(--accent);font-size:13px;">transmissionbt.com &nearr;</a></div>';
+  document.getElementById("modal-overlay").classList.add("show");
+}
+window.showClientModal = showClientModal;
+document.getElementById("modal-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeModal();
+});
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") { closeModal(); closeReqModal(); closeSeederModal(); closeAddModal(); }
+});
+
+// === SEARCH + SORT ===
+document.getElementById("search").addEventListener("input", function(e) {
+  searchQuery = e.target.value;
+  renderGrid();
+});
+document.getElementById("sort").addEventListener("change", function(e) {
+  sortMode = e.target.value;
+  renderGrid();
+});
+
+// === TOGGLES ===
+// Format and Type are independent: Type is never grayed-out because quants
+// can be of base models or of fine-tune models, so the Type filter applies
+// across all formats (all/safetensors/quants).
+document.getElementById("seg-format").addEventListener("click", function(e) {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  filterFormat = btn.dataset.val;
+  for (const b of this.querySelectorAll("button")) b.classList.toggle("active", b === btn);
+  renderGrid();
+});
+document.getElementById("seg-type").addEventListener("click", function(e) {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  filterType = btn.dataset.val;
+  for (const b of this.querySelectorAll("button")) b.classList.toggle("active", b === btn);
+  renderGrid();
+});
+
+// === SELF-UPDATE CHECK (SHA-256 verified, TOCTOU-safe via blob URL) ===
+let bestNewVersion = null;
+let bestNewEvent = null;
+let bestVerifiedBlobUrl = null;
+
+function checkUpdate(ev) {
+  const tags = ev.tags;
+  const v = tagVal(tags, "version");
+  if (!v) return;
+  const vNum = parseInt(v);
+  const curNum = parseInt(VERSION);
+  if (isNaN(vNum) || vNum <= curNum) return;
+  const urls = tagVals(tags, "url");
+  if (!urls.length) return;
+  const sha = tagVal(tags, "sha256");
+  if (!sha) { console.warn("[update] no sha256 tag; ignoring"); return; }
+  if (bestNewVersion === null || vNum > bestNewVersion) {
+    if (bestVerifiedBlobUrl) { URL.revokeObjectURL(bestVerifiedBlobUrl); bestVerifiedBlobUrl = null; }
+    bestNewVersion = vNum;
+    bestNewEvent = ev;
+    showBannerVerifying(vNum);
+    verifyUpdate(ev);
+  }
+}
+
+function showBannerVerifying(v) {
+  const b = document.getElementById("banner");
+  b.classList.add("show"); b.classList.remove("warn", "verified");
+  b.querySelector(".msg").innerHTML = '<span class="spinner"></span>Version ' + v +
+    ' available — verifying SHA-256 integrity…';
+  b.querySelector(".open-link").style.display = "none";
+  b.querySelector(".dl-link-btn").style.display = "none";
+}
+
+function showBannerVerified(v, blobUrl, shaHex) {
+  if (bestNewEvent && tagVal(bestNewEvent.tags, "version") !== String(v)) return;
+  bestVerifiedBlobUrl = blobUrl;
+  const b = document.getElementById("banner");
+  b.classList.add("show", "verified"); b.classList.remove("warn");
+  b.querySelector(".msg").innerHTML = '<strong>Update ' + v + ' ready</strong> — SHA-256 verified ' +
+    '<span style="opacity:0.6">' + shortHash(shaHex, 12) + '</span> ' +
+    '<span style="opacity:0.5;font-size:11px">(local verified copy)</span>';
+  const open = b.querySelector(".open-link");
+  open.style.display = ""; open.href = blobUrl;
+  const dl = b.querySelector(".dl-link-btn");
+  dl.style.display = ""; dl.href = blobUrl;
+  dl.setAttribute("download", "waifu-magnet-" + v + ".html");
+}
+
+function showBannerWarn(v, msg) {
+  if (bestNewEvent && tagVal(bestNewEvent.tags, "version") !== String(v)) return;
+  if (bestVerifiedBlobUrl) { URL.revokeObjectURL(bestVerifiedBlobUrl); bestVerifiedBlobUrl = null; }
+  const b = document.getElementById("banner");
+  b.classList.add("show", "warn"); b.classList.remove("verified");
+  b.querySelector(".msg").innerHTML = '<strong>WARNING:</strong> ' + msg +
+    ' — possible Blossom tampering, do NOT upgrade.';
+  b.querySelector(".open-link").style.display = "none";
+  b.querySelector(".dl-link-btn").style.display = "none";
+}
+
+async function verifyUpdate(ev) {
+  const v = tagVal(ev.tags, "version");
+  const expectedSha = tagVal(ev.tags, "sha256").toLowerCase();
+  const urls = tagVals(ev.tags, "url");
+  const expectedSize = tagVal(ev.tags, "size");
+  let verifiedBytes = null;
+  let verifiedSha = null;
+  const mismatches = [];
+  const errors = [];
+
+  for (const url of urls) {
+    let buf;
+    try {
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) { errors.push(hostname(url) + " HTTP " + resp.status); continue; }
+      buf = await resp.arrayBuffer();
+    } catch (e) {
+      errors.push(hostname(url) + " " + (e.message || "fetch failed"));
+      continue;
+    }
+    if (expectedSize && buf.byteLength !== parseInt(expectedSize)) {
+      mismatches.push(hostname(url) + " size " + buf.byteLength + "!=" + expectedSize);
+      continue;
+    }
+    let hashHex;
+    try {
+      const hashBuf = await crypto.subtle.digest("SHA-256", buf);
+      hashHex = [...new Uint8Array(hashBuf)].map(b => b.toString(16).padStart(2, "0")).join("");
+    } catch (e) {
+      errors.push(hostname(url) + " hash failed"); continue;
+    }
+    if (hashHex === expectedSha) { verifiedBytes = buf; verifiedSha = hashHex; break; }
+    else { mismatches.push(hostname(url) + " " + shortHash(hashHex, 8)); }
+  }
+
+  if (verifiedBytes !== null) {
+    const blob = new Blob([verifiedBytes], { type: "text/html" });
+    const blobUrl = URL.createObjectURL(blob);
+    showBannerVerified(parseInt(v), blobUrl, verifiedSha);
+  } else if (mismatches.length) {
+    showBannerWarn(parseInt(v), "Hash mismatch: " + mismatches.join("; "));
+  } else {
+    showBannerWarn(parseInt(v), "Could not verify: " + errors.join("; "));
+  }
+}
+
+// === RELAY CONNECTION ===
+const authorHexes = NPUBS.map(bech32Decode).filter(h => h);
+if (!authorHexes.length) {
+  console.error("bad npub");
+} else {
+  _fastLibReady.then(function(fastOk) {
+    if (fastOk) {
+      trustMode = false;
+      document.getElementById("relay-total").textContent = RELAYS.length;
+      for (const relayUrl of RELAYS) connectRelay(relayUrl, authorHexes);
+    } else {
+      trustMode = true;
+      console.warn("[nostr] trust mode: using only " + TRUSTING_RELAY + " (no sig verification)");
+      document.getElementById("relay-total").textContent = 1;
+      connectRelay(TRUSTING_RELAY, authorHexes);
+    }
+  });
+}
+
+// Process an event AFTER its signature has been verified.
+function processVerifiedEvent(ev) {
+  if (ev.kind === TORRENT_KIND) {
+    const ih = tagVal(ev.tags, "d");
+    if (!ih) return;
+    const existing = torrentMap.get(ih);
+    if (!existing || ev.created_at > existing.created_at) {
+      torrentMap.set(ih, { event: ev, created_at: ev.created_at, meta: modelMeta(ev.tags) });
+      renderGrid();
+    }
+  } else if (ev.kind === CLIENT_KIND) {
+    checkUpdate(ev);
+  }
+}
+
+// Verify a received event before trusting it:
+//   - In trust mode (CDN lib unavailable): skip verification, trust the
+//     single relay (nostr.mom) to have filtered by authors correctly.
+//   - In fast mode: recompute the Nostr message hash, confirm it equals
+//     ev.id, then run BIP-340 Schnorr verification via @noble/curves.
+// Only on success does the event reach processVerifiedEvent / torrentMap /
+// checkUpdate. Fail-closed: any error drops the event.
+async function handleEvent(ev) {
+  try {
+    if (trustMode) {
+      processVerifiedEvent(ev);
+      return;
+    }
+    const m = await _eventHash(ev);
+    if (m !== ev.id) {
+      console.warn("[nostr] dropped: event id != recomputed hash:", ev.id);
+      return;
+    }
+    if (verifiedMsgHashes.has(m)) { processVerifiedEvent(ev); return; }
+    let ok;
+    try {
+      ok = _fastSchnorrVerify(_hexBytes(ev.sig), _hexBytes(m), _hexBytes(ev.pubkey));
+    } catch (e) {
+      console.warn("[nostr] verify error:", e);
+      ok = false;
+    }
+    if (!ok) {
+      console.warn("[nostr] dropped: invalid Schnorr signature:", ev.id);
+      return;
+    }
+    verifiedMsgHashes.add(m);
+    processVerifiedEvent(ev);
+  } catch (e) {
+    console.error("[nostr] verification error:", e);
+  }
+}
+
+function connectRelay(url, authors) {
+  let ws;
+  try { ws = new WebSocket(url); }
+  catch (e) { relayErrors++; updateConnStatus(); return; }
+  const subIdT = "t" + Math.random().toString(36).slice(2, 8);
+  const subIdC = "c" + Math.random().toString(36).slice(2, 8);
+  let gotEOSE = false;
+
+  ws.onopen = function() {
+    relaysConnected++;
+    ws.send(JSON.stringify(["REQ", subIdT, { kinds: [TORRENT_KIND], authors: authors, limit: 500 }]));
+    ws.send(JSON.stringify(["REQ", subIdC, { kinds: [CLIENT_KIND], authors: authors, limit: 1 }]));
+    updateConnStatus();
+  };
+  ws.onmessage = function(msg) {
+    let data;
+    try { data = JSON.parse(msg.data); } catch (e) { return; }
+    if (data[0] === "EVENT") {
+      const ev = data[2];
+      if (!ev || typeof ev.pubkey !== "string") return;
+      // Whitelist gate: reject any event not signed by the coder's pubkey.
+      if (!authorHexes.includes(ev.pubkey)) return;
+      handleEvent(ev);
+    } else if (data[0] === "EOSE") {
+      if (!gotEOSE) { gotEOSE = true; relaysEOSE++; updateConnStatus(); }
+    }
+  };
+  ws.onerror = function() { if (!gotEOSE) { relayErrors++; updateConnStatus(); } };
+  ws.onclose = function() { if (!gotEOSE) { relayErrors++; updateConnStatus(); } };
+}
+
+setTimeout(function() {
+  const total = trustMode ? 1 : RELAYS.length;
+  if (relaysEOSE + relayErrors < total) {
+    relayErrors = total - relaysEOSE;
+    updateConnStatus();
+  }
+}, 15000);
+
+// === MODEL REQUEST (kind 30103 with proof-of-work) ===
+const NSEC_STORAGE_KEY = "wm-nsec";
+const POW_DURATION_MS = 10000;
+let _userKeys = null;
+let _reqType = "all";
+
+async function getOrCreateUserKeys() {
+  if (_userKeys) return _userKeys;
+  if (!_fastGetPublicKey || !_fastSchnorrSign) return null;
+  let privKeyBytes = null;
+  const stored = localStorage.getItem(NSEC_STORAGE_KEY);
+  if (stored && stored.startsWith("nsec1")) {
+    const hex = bech32Decode(stored);
+    if (hex && hex.length === 64) privKeyBytes = _hexBytes(hex);
+  }
+  if (!privKeyBytes || privKeyBytes.length !== 32) {
+    privKeyBytes = crypto.getRandomValues(new Uint8Array(32));
+    const nsec = bech32Encode("nsec", privKeyBytes);
+    if (!nsec) { console.error("[req] bech32Encode failed for nsec"); return null; }
+    localStorage.setItem(NSEC_STORAGE_KEY, nsec);
+  }
+  const pubKeyXOnly = _fastGetPublicKey(privKeyBytes);
+  const pubKeyHex = _bToHex(pubKeyXOnly);
+  const npub = bech32Encode("npub", pubKeyXOnly);
+  _userKeys = { privKey: privKeyBytes, pubKeyHex, npub };
+  return _userKeys;
+}
+
+function leadingZeroBits(hex) {
+  let bits = 0;
+  for (let i = 0; i < hex.length; i++) {
+    const n = parseInt(hex[i], 16);
+    bits += Math.clz32(n) - 28;
+    if (n !== 0) break;
+  }
+  return bits;
+}
+
+const _POW_WORKER_CODE = `
+const K = new Uint32Array([
+  0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+  0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+  0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+  0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+]);
+const H0 = new Uint32Array([
+  0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19
+]);
+function rotr(x, n) { return ((x >>> n) | (x << (32 - n))) >>> 0; }
+function sha256hex(data) {
+  const len = data.length;
+  const bitLen = len * 8;
+  const paddedLen = (((len + 9) + 63) >> 6) << 6;
+  const msg = new Uint8Array(paddedLen);
+  msg.set(data);
+  msg[len] = 0x80;
+  const dv = new DataView(msg.buffer);
+  dv.setUint32(paddedLen - 4, bitLen >>> 0, false);
+  dv.setUint32(paddedLen - 8, 0, false);
+  const w = new Uint32Array(64);
+  const h = new Uint32Array(H0);
+  const a = new Uint32Array(8);
+  for (let i = 0; i < paddedLen; i += 64) {
+    for (let j = 0; j < 16; j++) w[j] = dv.getUint32(i + j * 4, false);
+    for (let j = 16; j < 64; j++) {
+      const s0 = rotr(w[j-15], 7) ^ rotr(w[j-15], 18) ^ (w[j-15] >>> 3);
+      const s1 = rotr(w[j-2], 17) ^ rotr(w[j-2], 19) ^ (w[j-2] >>> 10);
+      w[j] = (w[j-16] + s0 + w[j-7] + s1) >>> 0;
+    }
+    for (let j = 0; j < 8; j++) a[j] = h[j];
+    for (let j = 0; j < 64; j++) {
+      const S1 = rotr(a[4], 6) ^ rotr(a[4], 11) ^ rotr(a[4], 25);
+      const ch = (a[4] & a[5]) ^ (~a[4] & a[6]);
+      const t1 = (a[7] + S1 + ch + K[j] + w[j]) >>> 0;
+      const S0 = rotr(a[0], 2) ^ rotr(a[0], 13) ^ rotr(a[0], 22);
+      const mj = (a[0] & a[1]) ^ (a[0] & a[2]) ^ (a[1] & a[2]);
+      const t2 = (S0 + mj) >>> 0;
+      a[7] = a[6]; a[6] = a[5]; a[5] = a[4];
+      a[4] = (a[3] + t1) >>> 0;
+      a[3] = a[2]; a[2] = a[1]; a[1] = a[0];
+      a[0] = (t1 + t2) >>> 0;
+    }
+    for (let j = 0; j < 8; j++) h[j] = (h[j] + a[j]) >>> 0;
+  }
+  let hex = "";
+  for (let j = 0; j < 8; j++) hex += h[j].toString(16).padStart(8, "0");
+  return hex;
+}
+function leadingZeroBits(hex) {
+  let bits = 0;
+  for (let i = 0; i < hex.length; i++) {
+    const n = parseInt(hex[i], 16);
+    bits += Math.clz32(n) - 28;
+    if (n !== 0) break;
+  }
+  return bits;
+}
+const enc = new TextEncoder();
+self.onmessage = function(e) {
+  const d = e.data;
+  const tags = JSON.parse(JSON.stringify(d.tags));
+  const start = Date.now();
+  let bestNonce = 0, bestPow = -1, bestId = "", hashes = 0;
+  let nonce = (Math.random() * 0xFFFFFFFF) >>> 0;
+  function computeId(n) {
+    tags[tags.length - 1] = ["nonce", String(n)];
+    const s = JSON.stringify([0, d.pubkey, d.created_at, d.kind, tags, d.content]);
+    return sha256hex(enc.encode(s));
+  }
+  function tick() {
+    const elapsed = Date.now() - start;
+    if (elapsed >= d.durationMs) {
+      self.postMessage({ type: "done", nonce: bestNonce, pow: bestPow, id: bestId, hashes: hashes });
+      self.close();
+      return;
+    }
+    for (let i = 0; i < 100000; i++) {
+      const id = computeId(nonce);
+      hashes++;
+      const p = leadingZeroBits(id);
+      if (p > bestPow) { bestPow = p; bestNonce = nonce; bestId = id; }
+      nonce++;
+    }
+    self.postMessage({ type: "progress", pow: bestPow, hashes: hashes, elapsed: elapsed });
+    setTimeout(tick, 0);
+  }
+  tick();
+};
+`;
+
+function buildRequestTags(pubKeyHex, name, links, type, vram) {
+  const tags = [["d", pubKeyHex], ["name", name]];
+  for (const url of links) {
+    const u = url.trim();
+    if (u) tags.push(["url", u]);
+  }
+  tags.push(["type", type]);
+  if (vram !== null && vram !== "" && !isNaN(Number(vram))) {
+    tags.push(["vram_gb", String(vram)]);
+  }
+  tags.push(["client", "waifu-magnet-" + VERSION]);
+  tags.push(["nonce", "0"]);
+  return tags;
+}
+
+// Runs the PoW worker for `durationMs`, varying the last "nonce" tag of
+// `tags`. Resolves to { nonce, pow, id, hashes } or rejects on worker error.
+// The caller is responsible for updating `tags` with the winning nonce and
+// signing the resulting event id (== result.id).
+function runPowWorker(pubKeyHex, createdAt, kind, tags, content, durationMs) {
+  return new Promise((resolve, reject) => {
+    let worker;
+    try {
+      const blob = new Blob([_POW_WORKER_CODE], { type: "application/javascript" });
+      const url = URL.createObjectURL(blob);
+      worker = new Worker(url);
+    } catch (e) {
+      reject(new Error("Web Worker unavailable: " + e.message));
+      return;
+    }
+    worker.onmessage = function(e) {
+      const d = e.data;
+      if (d.type === "progress") {
+        if (typeof runPowWorker.onProgress === "function") {
+          runPowWorker.onProgress(d);
+        }
+      } else if (d.type === "done") {
+        resolve(d);
+      }
+    };
+    worker.onerror = function(e) {
+      reject(new Error("Worker error: " + (e.message || "unknown")));
+    };
+    worker.postMessage({
+      pubkey: pubKeyHex,
+      created_at: createdAt,
+      kind: kind,
+      tags: tags,
+      content: content,
+      durationMs: durationMs,
+    });
+  });
+}
+
+async function submitRequest() {
+  const name = document.getElementById("req-name").value.trim();
+  if (!name) {
+    showReqError("Model name is required.");
+    return;
+  }
+  const linksRaw = document.getElementById("req-links").value.trim();
+  const links = linksRaw ? linksRaw.split("\n").map(s => s.trim()).filter(Boolean) : [];
+  const vram = document.getElementById("req-vram").value.trim();
+  const type = _reqType;
+
+  const keys = await getOrCreateUserKeys();
+  if (!keys) {
+    showReqError("Crypto library not loaded. Reload the page and try again.");
+    return;
+  }
+
+  const submitBtn = document.getElementById("req-submit");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Mining PoW…";
+  const progress = document.getElementById("pow-progress");
+  progress.classList.add("show");
+  const fill = document.getElementById("pow-fill");
+  const text = document.getElementById("pow-text");
+  fill.style.width = "0%";
+  text.innerHTML = "starting proof-of-work search…";
+
+  const created_at = Math.floor(Date.now() / 1000);
+  const tags = buildRequestTags(keys.pubKeyHex, name, links, type, vram);
+
+  try {
+    runPowWorker.onProgress = function(d) {
+      const pct = Math.min(100, (d.elapsed / POW_DURATION_MS) * 100);
+      fill.style.width = pct.toFixed(1) + "%";
+      const secs = Math.max(0, Math.ceil((POW_DURATION_MS - d.elapsed) / 1000));
+      const rate = (d.hashes / Math.max(1, d.elapsed / 1000)).toFixed(0);
+      text.innerHTML = "best: <b>" + d.pow + "</b> leading-zero bits &middot; " +
+        rate + " h/s &middot; " + secs + "s left";
+    };
+    const result = await runPowWorker(keys.pubKeyHex, created_at, REQUEST_KIND, tags, "", POW_DURATION_MS);
+
+    if (result.pow < 1) {
+      showReqError("Could not find any proof-of-work in " + (POW_DURATION_MS / 1000) + "s. Try again.");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit request";
+      progress.classList.remove("show");
+      return;
+    }
+
+    tags[tags.length - 1] = ["nonce", String(result.nonce)];
+
+    const eventId = result.id;
+    const msgBytes = _hexBytes(eventId);
+    let sigBytes;
+    try {
+      sigBytes = _fastSchnorrSign(msgBytes, keys.privKey);
+    } catch (e) {
+      showReqError("Signing failed: " + e.message);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit request";
+      progress.classList.remove("show");
+      return;
+    }
+    const sigHex = _bToHex(sigBytes);
+
+    const event = {
+      id: eventId,
+      pubkey: keys.pubKeyHex,
+      created_at: created_at,
+      kind: REQUEST_KIND,
+      tags: tags,
+      content: "",
+      sig: sigHex,
+    };
+
+    text.innerHTML = "publishing to relays…";
+    const pub = await publishEvent(event);
+
+    progress.classList.remove("show");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit request";
+
+    if (pub.ok > 0) {
+      closeReqModal();
+      showReqBanner(true, "Thanks for submitting a request. We will check it. " +
+        "(Published to " + pub.ok + "/" + pub.total + " relays, PoW: " + result.pow + " bits.)");
+    } else {
+      showReqBanner(false, "No relay accepted the request (0/" + pub.total + "). Try again later.");
+    }
+  } catch (e) {
+    showReqError(e.message || "Unknown error during PoW.");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit request";
+    progress.classList.remove("show");
+  }
+}
+window.submitRequest = submitRequest;
+
+// === SEEDER REQUEST (kind 30102 with proof-of-work) ===
+// Lets a user signal that a torrent has no seeders. Mines PoW for ~10 seconds
+// (same worker as model requests) and publishes a kind 30102 event whose
+// `e` tag points at the original kind 30099 torrent event id and whose `d`
+// tag is pubkey:infohash so it's replaceable per user per torrent.
+function buildSeederTags(pubKeyHex, torrentEventId, infohash, name) {
+  const tags = [
+    ["d", pubKeyHex + ":" + infohash],
+    ["e", torrentEventId],
+    ["i", infohash],
+  ];
+  if (name) tags.push(["name", name]);
+  tags.push(["client", "waifu-magnet-" + VERSION]);
+  tags.push(["nonce", "0"]);
+  return tags;
+}
+
+async function requestSeeders() {
+  const entry = _modalEntry;
+  if (!entry) return;
+  const ev = entry.event;
+  const torrentEventId = ev.id;
+  const infohash = tagVal(ev.tags, "d") || "";
+  const name = titleOf(ev.tags, entry.meta || modelMeta(ev.tags));
+  if (!torrentEventId || !infohash) return;
+
+  const keys = await getOrCreateUserKeys();
+  if (!keys) {
+    showReqBanner(false, "Crypto library not loaded. Reload the page and try again.");
+    return;
+  }
+
+  const btn = document.getElementById("seeder-submit");
+  const progress = document.getElementById("seeder-pow-progress");
+  const fill = document.getElementById("seeder-pow-fill");
+  const text = document.getElementById("seeder-pow-text");
+  btn.disabled = true;
+  btn.textContent = "Mining PoW…";
+  progress.classList.add("show");
+  fill.style.width = "0%";
+  text.innerHTML = "starting proof-of-work search…";
+
+  const created_at = Math.floor(Date.now() / 1000);
+  const tags = buildSeederTags(keys.pubKeyHex, torrentEventId, infohash, name);
+
+  try {
+    runPowWorker.onProgress = function(d) {
+      const pct = Math.min(100, (d.elapsed / POW_DURATION_MS) * 100);
+      fill.style.width = pct.toFixed(1) + "%";
+      const secs = Math.max(0, Math.ceil((POW_DURATION_MS - d.elapsed) / 1000));
+      const rate = (d.hashes / Math.max(1, d.elapsed / 1000)).toFixed(0);
+      text.innerHTML = "best: <b>" + d.pow + "</b> leading-zero bits &middot; " +
+        rate + " h/s &middot; " + secs + "s left";
+    };
+    const result = await runPowWorker(keys.pubKeyHex, created_at, SEEDER_KIND, tags, "", POW_DURATION_MS);
+
+    if (result.pow < 1) {
+      text.innerHTML = '<span style="color:var(--red)">Could not find proof-of-work in ' +
+        (POW_DURATION_MS / 1000) + "s. Try again.</span>";
+      btn.disabled = false;
+      btn.textContent = "Start — mine for 10 seconds";
+      progress.classList.remove("show");
+      return;
+    }
+
+    tags[tags.length - 1] = ["nonce", String(result.nonce)];
+
+    const eventId = result.id;
+    const msgBytes = _hexBytes(eventId);
+    let sigBytes;
+    try {
+      sigBytes = _fastSchnorrSign(msgBytes, keys.privKey);
+    } catch (e) {
+      text.innerHTML = '<span style="color:var(--red)">Signing failed: ' + escapeHtml(e.message) + "</span>";
+      btn.disabled = false;
+      btn.textContent = "Start — mine for 10 seconds";
+      progress.classList.remove("show");
+      return;
+    }
+    const sigHex = _bToHex(sigBytes);
+
+    const event = {
+      id: eventId,
+      pubkey: keys.pubKeyHex,
+      created_at: created_at,
+      kind: SEEDER_KIND,
+      tags: tags,
+      content: "",
+      sig: sigHex,
+    };
+
+    text.innerHTML = "publishing to relays…";
+    const pub = await publishEvent(event);
+
+    progress.classList.remove("show");
+    btn.disabled = false;
+    btn.textContent = "Start — mine for 10 seconds";
+
+    if (pub.ok > 0) {
+      closeSeederModal();
+      closeModal();
+      showReqBanner(true, "Seeder request published for <strong>" + escapeHtml(name) +
+        "</strong>. Others will see the demand. " +
+        "(Published to " + pub.ok + "/" + pub.total + " relays, PoW: " + result.pow + " bits.)");
+    } else {
+      showReqBanner(false, "No relay accepted the seeder request (0/" + pub.total + "). Try again later.");
+    }
+  } catch (e) {
+    text.innerHTML = '<span style="color:var(--red)">' + escapeHtml(e.message || "Unknown error during PoW.") + "</span>";
+    btn.disabled = false;
+    btn.textContent = "Start — mine for 10 seconds";
+    progress.classList.remove("show");
+  }
+}
+window.requestSeeders = requestSeeders;
+
+function openSeederModal() {
+  const entry = _modalEntry;
+  if (!entry) return;
+  const ev = entry.event;
+  const name = titleOf(ev.tags, entry.meta || modelMeta(ev.tags));
+  document.getElementById("seeder-model-name").textContent = "for " + name;
+  document.getElementById("seeder-pow-progress").classList.remove("show");
+  const btn = document.getElementById("seeder-submit");
+  btn.disabled = false;
+  btn.textContent = "Start — mine for 10 seconds";
+  _fastLibReady.then(async function() {
+    await getOrCreateUserKeys();
+  });
+  document.getElementById("seeder-overlay").classList.add("show");
+}
+window.openSeederModal = openSeederModal;
+
+function closeSeederModal() {
+  document.getElementById("seeder-overlay").classList.remove("show");
+}
+window.closeSeederModal = closeSeederModal;
+
+document.getElementById("seeder-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeSeederModal();
+});
+
+function showReqError(msg) {
+  showReqBanner(false, msg);
+}
+
+function showReqBanner(ok, msgHtml) {
+  const b = document.getElementById("banner");
+  b.classList.add("show");
+  b.classList.remove("verified", "warn");
+  if (ok) {
+    b.classList.add("verified");
+  } else {
+    b.classList.add("warn");
+  }
+  b.querySelector(".msg").innerHTML = msgHtml;
+  b.querySelector(".open-link").style.display = "none";
+  b.querySelector(".dl-link-btn").style.display = "none";
+}
+
+function publishEvent(event) {
+  return new Promise((resolve) => {
+    const relays = trustMode ? [TRUSTING_RELAY] : RELAYS;
+    const total = relays.length;
+    let ok = 0, done = 0;
+    if (total === 0) { resolve({ ok: 0, total: 0 }); return; }
+    for (const url of relays) {
+      let ws;
+      try { ws = new WebSocket(url); }
+      catch (e) { done++; if (done >= total) resolve({ ok, total }); continue; }
+      const timer = setTimeout(() => {
+        try { ws.close(); } catch (e) {}
+        done++;
+        if (done >= total) resolve({ ok, total });
+      }, 8000);
+      ws.onopen = function() {
+        ws.send(JSON.stringify(["EVENT", event]));
+      };
+      ws.onmessage = function(msg) {
+        try {
+          const data = JSON.parse(msg.data);
+          if (data[0] === "OK" && data[1] === event.id) {
+            if (data[2] === true) ok++;
+            clearTimeout(timer);
+            try { ws.close(); } catch (e) {}
+            done++;
+            if (done >= total) resolve({ ok, total });
+          }
+        } catch (e) {}
+      };
+      ws.onerror = function() {
+        clearTimeout(timer);
+        done++;
+        if (done >= total) resolve({ ok, total });
+      };
+    }
+  });
+}
+
+function openReqModal() {
+  document.getElementById("modal-overlay").classList.remove("show");
+  document.getElementById("req-name").value = "";
+  document.getElementById("req-links").value = "";
+  document.getElementById("req-vram").value = "";
+  document.getElementById("pow-progress").classList.remove("show");
+  document.getElementById("req-submit").disabled = false;
+  document.getElementById("req-submit").textContent = "Submit request";
+  _reqType = "all";
+  for (const b of document.querySelectorAll("#req-seg-type button")) {
+    b.classList.toggle("active", b.dataset.val === "all");
+  }
+  _fastLibReady.then(async function() {
+    await getOrCreateUserKeys();
+  });
+  document.getElementById("req-overlay").classList.add("show");
+  document.getElementById("req-modal").style.display = "";
+}
+window.openReqModal = openReqModal;
+
+function closeReqModal() {
+  document.getElementById("req-overlay").classList.remove("show");
+}
+window.closeReqModal = closeReqModal;
+
+document.getElementById("req-btn").addEventListener("click", openReqModal);
+document.getElementById("add-torrent-btn").addEventListener("click", openAddModal);
+document.getElementById("req-seg-type").addEventListener("click", function(e) {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  _reqType = btn.dataset.val;
+  for (const b of this.querySelectorAll("button")) {
+    b.classList.toggle("active", b === btn);
+  }
+});
+document.getElementById("req-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeReqModal();
+});
+
+// === ADD TORRENT (kind 30099 with proof-of-work) ===
+// Lets a user publish a new torrent listing. Mines PoW for ~10 seconds (same
+// worker as model requests) then signs and publishes a kind 30099 event.
+// Required: torrent URL, model name, client/tool used to make the torrent.
+// Strongly suggested: HuggingFace link. New fields: torrent_client_tool and
+// hf_match (does the torrent match the HF repo exactly?).
+let _addClass = "n/a";
+let _addKind = "n/a";
+let _addHfMatch = "yes";
+
+function openAddModal() {
+  document.getElementById("modal-overlay").classList.remove("show");
+  ["add-url","add-name","add-hf","add-size","add-lab","add-quant-type","add-client-tool"].forEach(function(id){
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  document.getElementById("add-pow-progress").classList.remove("show");
+  document.getElementById("add-submit").disabled = false;
+  document.getElementById("add-submit").textContent = "Publish torrent listing";
+  _addClass = "n/a"; _addKind = "n/a"; _addHfMatch = "yes";
+  for (const b of document.querySelectorAll("#add-seg-class button")) {
+    b.classList.toggle("active", b.dataset.val === "n/a");
+  }
+  for (const b of document.querySelectorAll("#add-seg-kind button")) {
+    b.classList.toggle("active", b.dataset.val === "n/a");
+  }
+  for (const b of document.querySelectorAll("#add-seg-match button")) {
+    b.classList.toggle("active", b.dataset.val === "yes");
+  }
+  _fastLibReady.then(async function() {
+    await getOrCreateUserKeys();
+  });
+  document.getElementById("add-overlay").classList.add("show");
+}
+window.openAddModal = openAddModal;
+
+function closeAddModal() {
+  document.getElementById("add-overlay").classList.remove("show");
+}
+window.closeAddModal = closeAddModal;
+
+document.getElementById("add-overlay").addEventListener("click", function(e) {
+  if (e.target === this) closeAddModal();
+});
+document.getElementById("add-seg-class").addEventListener("click", function(e) {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  _addClass = btn.dataset.val;
+  for (const b of this.querySelectorAll("button")) {
+    b.classList.toggle("active", b === btn);
+  }
+});
+document.getElementById("add-seg-kind").addEventListener("click", function(e) {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  _addKind = btn.dataset.val;
+  for (const b of this.querySelectorAll("button")) {
+    b.classList.toggle("active", b === btn);
+  }
+});
+document.getElementById("add-seg-match").addEventListener("click", function(e) {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  _addHfMatch = btn.dataset.val;
+  for (const b of this.querySelectorAll("button")) {
+    b.classList.toggle("active", b === btn);
+  }
+});
+
+function buildAddTorrentTags(pubKeyHex, fields) {
+  const tags = [];
+  // d tag: stable id derived from the URL + name + pubkey.
+  const d = "user:" + pubKeyHex + ":" + sha256hexSync(fields.url + ":" + fields.name);
+  tags.push(["d", d]);
+  tags.push(["url", fields.url]);
+  tags.push(["name", fields.name]);
+  if (fields.size !== null && fields.size !== "" && !isNaN(Number(fields.size))) {
+    tags.push(["size", String(Math.round(Number(fields.size) * 1073741824))]);
+  }
+  if (fields.hf) {
+    tags.push(["source", hostname(fields.hf)]);
+    tags.push(["hf", fields.hf]);
+  }
+  tags.push(["file_class", fields.fileClass]);
+  tags.push(["model_kind", fields.modelKind]);
+  if (fields.lab) tags.push(["lab", fields.lab]);
+  if (fields.quantType) tags.push(["quant_type", fields.quantType]);
+  if (fields.clientTool) tags.push(["torrent_client_tool", fields.clientTool]);
+  tags.push(["hf_match", fields.hfMatch]);
+  tags.push(["client", "waifu-magnet-" + VERSION]);
+  tags.push(["nonce", "0"]);
+  return tags;
+}
+
+// Synchronous SHA-256 hex (used only to derive a d-tag fallback). Uses the
+// worker's pure-JS sha256 implementation inlined for the main thread.
+function sha256hexSync(data) {
+  const enc = new TextEncoder();
+  const bytes = typeof data === "string" ? enc.encode(data) : data;
+  // Reuse a tiny inline SHA-256 (same as the worker's).
+  const K = new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ]);
+  const H0 = new Uint32Array([
+    0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19
+  ]);
+  function rotr(x, n) { return ((x >>> n) | (x << (32 - n))) >>> 0; }
+  const len = bytes.length;
+  const bitLen = len * 8;
+  const paddedLen = (((len + 9) + 63) >> 6) << 6;
+  const msg = new Uint8Array(paddedLen);
+  msg.set(bytes);
+  msg[len] = 0x80;
+  const dv = new DataView(msg.buffer);
+  dv.setUint32(paddedLen - 4, bitLen >>> 0, false);
+  dv.setUint32(paddedLen - 8, 0, false);
+  const w = new Uint32Array(64);
+  const h = new Uint32Array(H0);
+  const a = new Uint32Array(8);
+  for (let i = 0; i < paddedLen; i += 64) {
+    for (let j = 0; j < 16; j++) w[j] = dv.getUint32(i + j * 4, false);
+    for (let j = 16; j < 64; j++) {
+      const s0 = rotr(w[j-15], 7) ^ rotr(w[j-15], 18) ^ (w[j-15] >>> 3);
+      const s1 = rotr(w[j-2], 17) ^ rotr(w[j-2], 19) ^ (w[j-2] >>> 10);
+      w[j] = (w[j-16] + s0 + w[j-7] + s1) >>> 0;
+    }
+    for (let j = 0; j < 8; j++) a[j] = h[j];
+    for (let j = 0; j < 64; j++) {
+      const S1 = rotr(a[4], 6) ^ rotr(a[4], 11) ^ rotr(a[4], 25);
+      const ch = (a[4] & a[5]) ^ (~a[4] & a[6]);
+      const t1 = (a[7] + S1 + ch + K[j] + w[j]) >>> 0;
+      const S0 = rotr(a[0], 2) ^ rotr(a[0], 13) ^ rotr(a[0], 22);
+      const mj = (a[0] & a[1]) ^ (a[0] & a[2]) ^ (a[1] & a[2]);
+      const t2 = (S0 + mj) >>> 0;
+      a[7] = a[6]; a[6] = a[5]; a[5] = a[4];
+      a[4] = (a[3] + t1) >>> 0;
+      a[3] = a[2]; a[2] = a[1]; a[1] = a[0];
+      a[0] = (t1 + t2) >>> 0;
+    }
+    for (let j = 0; j < 8; j++) h[j] = (h[j] + a[j]) >>> 0;
+  }
+  let hex = "";
+  for (let j = 0; j < 8; j++) hex += h[j].toString(16).padStart(8, "0");
+  return hex;
+}
+
+async function submitAddTorrent() {
+  const url = document.getElementById("add-url").value.trim();
+  const name = document.getElementById("add-name").value.trim();
+  const hf = document.getElementById("add-hf").value.trim();
+  const size = document.getElementById("add-size").value.trim();
+  const lab = document.getElementById("add-lab").value.trim();
+  const quantType = document.getElementById("add-quant-type").value.trim();
+  const clientTool = document.getElementById("add-client-tool").value.trim();
+
+  if (!url) { showReqBanner(false, "Torrent file URL is required."); return; }
+  if (!name) { showReqBanner(false, "Model name is required."); return; }
+  if (!hf) {
+    if (!confirm("No HuggingFace link provided. This is strongly suggested so others can verify the torrent. Continue anyway?")) return;
+  }
+
+  const keys = await getOrCreateUserKeys();
+  if (!keys) {
+    showReqBanner(false, "Crypto library not loaded. Reload the page and try again.");
+    return;
+  }
+
+  const submitBtn = document.getElementById("add-submit");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Mining PoW…";
+  const progress = document.getElementById("add-pow-progress");
+  const fill = document.getElementById("add-pow-fill");
+  const text = document.getElementById("add-pow-text");
+  progress.classList.add("show");
+  fill.style.width = "0%";
+  text.innerHTML = "starting proof-of-work search…";
+
+  const fields = {
+    url: url, name: name, hf: hf,
+    size: size, fileClass: _addClass, modelKind: _addKind,
+    lab: lab, quantType: quantType,
+    clientTool: clientTool, hfMatch: _addHfMatch,
+  };
+  const created_at = Math.floor(Date.now() / 1000);
+  const tags = buildAddTorrentTags(keys.pubKeyHex, fields);
+
+  try {
+    runPowWorker.onProgress = function(d) {
+      const pct = Math.min(100, (d.elapsed / POW_DURATION_MS) * 100);
+      fill.style.width = pct.toFixed(1) + "%";
+      const secs = Math.max(0, Math.ceil((POW_DURATION_MS - d.elapsed) / 1000));
+      const rate = (d.hashes / Math.max(1, d.elapsed / 1000)).toFixed(0);
+      text.innerHTML = "best: <b>" + d.pow + "</b> leading-zero bits &middot; " +
+        rate + " h/s &middot; " + secs + "s left";
+    };
+    const result = await runPowWorker(keys.pubKeyHex, created_at, TORRENT_KIND, tags, "", POW_DURATION_MS);
+
+    if (result.pow < 1) {
+      showReqBanner(false, "Could not find any proof-of-work in " + (POW_DURATION_MS / 1000) + "s. Try again.");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Publish torrent listing";
+      progress.classList.remove("show");
+      return;
+    }
+
+    tags[tags.length - 1] = ["nonce", String(result.nonce)];
+
+    const eventId = result.id;
+    const msgBytes = _hexBytes(eventId);
+    let sigBytes;
+    try {
+      sigBytes = _fastSchnorrSign(msgBytes, keys.privKey);
+    } catch (e) {
+      showReqBanner(false, "Signing failed: " + e.message);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Publish torrent listing";
+      progress.classList.remove("show");
+      return;
+    }
+    const sigHex = _bToHex(sigBytes);
+
+    const event = {
+      id: eventId,
+      pubkey: keys.pubKeyHex,
+      created_at: created_at,
+      kind: TORRENT_KIND,
+      tags: tags,
+      content: "",
+      sig: sigHex,
+    };
+
+    text.innerHTML = "publishing to relays…";
+    const pub = await publishEvent(event);
+
+    progress.classList.remove("show");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Publish torrent listing";
+
+    if (pub.ok > 0) {
+      closeAddModal();
+      showReqBanner(true, "Torrent listing published for <strong>" + escapeHtml(name) +
+        "</strong>. Note: your listing comes from your own npub, not the curator's, so it may not appear in this page's grid (which only shows whitelisted npubs). Others can still find it via Nostr. " +
+        "(Published to " + pub.ok + "/" + pub.total + " relays, PoW: " + result.pow + " bits.)");
+    } else {
+      showReqBanner(false, "No relay accepted the torrent listing (0/" + pub.total + "). Try again later.");
+    }
+  } catch (e) {
+    showReqBanner(false, e.message || "Unknown error during PoW.");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Publish torrent listing";
+    progress.classList.remove("show");
+  }
+}
+window.submitAddTorrent = submitAddTorrent;
+</script>
+</body>
+</html>

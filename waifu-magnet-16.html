@@ -271,6 +271,10 @@
     font-size: 11px; color: var(--muted); cursor: pointer;
   }
   .card .client-note:hover { color: var(--muted2); }
+  .card .client-note.warn { color: var(--amber); font-weight: 600; }
+  .card .client-note.warn::before {
+    content: "⚠ "; margin-right: 2px;
+  }
   .card .dl-btn {
     background: var(--accent); color: #000; padding: 5px 14px;
     border: none;
@@ -1304,6 +1308,7 @@ async function verifyAndDownloadTorrent(btnEl, urls, shaHex, entry) {
 
   // No signed hash → old event, trust Blossom (open directly).
   if (!shaHex) {
+    flagClientNote(btnEl);
     window.open(urls[0], "_blank");
     return;
   }
@@ -1359,6 +1364,7 @@ async function verifyAndDownloadTorrent(btnEl, urls, shaHex, entry) {
     // Cache the verified URL so the magnet can include &xs= for this entry.
     if (entry) entry.verifiedUrl = verifiedUrl;
 
+    flagClientNote(btnEl);
     btnEl.textContent = "verified ✓";
     setTimeout(function() { btnEl.textContent = originalText; }, 2000);
   } else {
@@ -1696,11 +1702,22 @@ window.closeModal = closeModal;
 function showClientModal() {
   document.getElementById("modal-name").textContent = "Requires Transmission";
   document.getElementById("modal-body").innerHTML =
-    '<div class="section"><div class="val prose">Requires Transmission client to fetch from webseeds, if there are no seeders. But if there are seeders any client should work.</div></div>' +
+    '<div class="section"><div class="val prose">Transmission client needs to be used for initial web seeding. But if there are seeders any client should work.</div></div>' +
     '<div class="section"><a href="https://transmissionbt.com/" target="_blank" style="color:var(--accent);font-size:13px;">transmissionbt.com &nearr;</a></div>';
   document.getElementById("modal-overlay").classList.add("show");
 }
 window.showClientModal = showClientModal;
+
+// After a .torrent download, turn the "requires Transmission" note on the
+// same card yellow with a ⚠ prefix so the user notices the webseed caveat.
+function flagClientNote(btnEl) {
+  if (!btnEl) return;
+  const card = btnEl.closest(".card");
+  if (!card) return;
+  const note = card.querySelector(".client-note");
+  if (note) note.classList.add("warn");
+}
+window.flagClientNote = flagClientNote;
 document.getElementById("modal-overlay").addEventListener("click", function(e) {
   if (e.target === this) closeModal();
 });

@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="8">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <marker id="arrg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a7f37"/>
+    </marker>
+    <marker id="arro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#bc4c00"/>
+    </marker>
+    <marker id="arrp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8957e5"/>
+    </marker>
+    <style>
+      .b   { stroke-width:1.1; }
+      .hf  { fill:#fff8e1; stroke:#b08800; }
+      .ca  { fill:#ecfdf5; stroke:#1a7f37; }
+      .pr  { fill:#eff8ff; stroke:#0969da; }
+      .bl  { fill:#fff4ec; stroke:#bc4c00; }
+      .no  { fill:#faf5ff; stroke:#8957e5; }
+      .us  { fill:#fff0f0; stroke:#cf222e; }
+      .sw  { fill:#fff5f5; stroke:#cf222e; opacity:0.85; }
+      .l   { font-weight:700; font-size:9px; fill:#1f2328; }
+      .s   { fill:#656d76; font-size:7px; }
+      .xs  { fill:#656d76; font-size:6.5px; }
+      .f   { stroke:#444; stroke-width:1.2; fill:none; }
+      .fg  { stroke:#1a7f37; stroke-width:1.2; fill:none; stroke-dasharray:3 2; }
+      .fo  { stroke:#bc4c00; stroke-width:1.2; fill:none; }
+      .fp  { stroke:#8957e5; stroke-width:1.2; fill:none; }
+      .n   { font-size:7px; fill:#fff; font-weight:700; }
+    </style>
+  </defs>
+
+  <!-- title -->
+  <text x="360" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#1f2328">HF → cache → torrent → Blossom/Nostr → users (clockwise)</text>
+
+  <!-- 1 HF repo -->
+  <g>
+    <rect class="b hf" x="16" y="30" width="140" height="54" rx="6"/>
+    <circle cx="26" cy="40" r="6" fill="#0969da"/><text x="26" y="43" text-anchor="middle" class="n">1</text>
+    <text x="86" y="48" text-anchor="middle" class="l">HuggingFace repo</text>
+    <text x="86" y="60" text-anchor="middle" class="s">models--org--repo</text>
+    <text x="86" y="70" text-anchor="middle" class="s">commit SHA + LFS blobs</text>
+  </g>
+
+  <!-- 2 cache -->
+  <g>
+    <rect class="b ca" x="186" y="30" width="140" height="54" rx="6"/>
+    <circle cx="196" cy="40" r="6" fill="#0969da"/><text x="196" y="43" text-anchor="middle" class="n">2</text>
+    <text x="256" y="48" text-anchor="middle" class="l">hf_hub_download()</text>
+    <text x="256" y="60" text-anchor="middle" class="s">~/.cache/huggingface/</text>
+    <text x="256" y="70" text-anchor="middle" class="s">snapshots/&lt;sha&gt;/</text>
+  </g>
+  <line class="f" x1="156" y1="57" x2="183" y2="57" marker-end="url(#arr)"/>
+
+  <!-- 3 builder -->
+  <g>
+    <rect class="b pr" x="356" y="26" width="190" height="62" rx="6"/>
+    <circle cx="366" cy="36" r="6" fill="#0969da"/><text x="366" y="39" text-anchor="middle" class="n">3</text>
+    <text x="451" y="44" text-anchor="middle" class="l">cache-to-torr-nostr.py</text>
+    <line x1="364" y1="49" x2="538" y2="49" stroke="#0969da" stroke-width="0.5"/>
+    <text x="364" y="59" class="s">• BT piece hash, verify checksums</text>
+    <text x="364" y="68" class="s">• .torrent (4 HF + 8 webseed + trackers)</text>
+    <text x="364" y="77" class="s">• NIP-13 PoW, sign kind 30099</text>
+  </g>
+  <line class="f" x1="326" y1="57" x2="353" y2="57" marker-end="url(#arr)"/>
+
+  <!-- 4 Blossom -->
+  <g>
+    <rect class="b bl" x="430" y="118" width="150" height="52" rx="6"/>
+    <circle cx="440" cy="128" r="6" fill="#bc4c00"/><text x="440" y="131" text-anchor="middle" class="n">4</text>
+    <text x="505" y="136" text-anchor="middle" class="l">Blossom (BUD-02)</text>
+    <text x="505" y="148" text-anchor="middle" class="s">.torrent uploaded as blob</text>
+    <text x="505" y="158" text-anchor="middle" class="s">+ xs= sha256 param</text>
+  </g>
+  <line class="fo" x1="475" y1="88" x2="500" y2="115" marker-end="url(#arro)"/>
+  <text x="478" y="104" class="xs">.torrent</text>
+
+  <!-- 5 Nostr -->
+  <g>
+    <rect class="b no" x="240" y="118" width="150" height="52" rx="6"/>
+    <circle cx="250" cy="128" r="6" fill="#8957e5"/><text x="250" y="131" text-anchor="middle" class="n">5</text>
+    <text x="315" y="136" text-anchor="middle" class="l">Nostr relays (×9)</text>
+    <text x="315" y="148" text-anchor="middle" class="s">kind 30099 fanned out</text>
+    <text x="315" y="158" text-anchor="middle" class="s">magnet, x, webseeds, trackers</text>
+  </g>
+  <line class="fp" x1="430" y1="88" x2="385" y2="115" marker-end="url(#arrp)"/>
+  <text x="395" y="104" class="xs">event</text>
+
+  <!-- 7 HF webseeds (bottom-left) -->
+  <g>
+    <rect class="b hf" x="16" y="230" width="150" height="62" rx="6"/>
+    <circle cx="26" cy="240" r="6" fill="#b08800"/><text x="26" y="243" text-anchor="middle" class="n">7</text>
+    <text x="91" y="248" text-anchor="middle" class="l">HF webseeds</text>
+    <text x="91" y="260" text-anchor="middle" class="s">1@…4@huggingface.co</text>
+    <text x="91" y="270" text-anchor="middle" class="s">+ 8 mirrors (HTTP Range)</text>
+    <text x="91" y="282" text-anchor="middle" class="s">redirector → pump/HF</text>
+  </g>
+
+  <!-- BT swarm (middle) -->
+  <g>
+    <rect class="b sw" x="186" y="210" width="260" height="100" rx="6"/>
+    <text x="316" y="224" text-anchor="middle" class="l">BT swarm (peers)</text>
+    <rect class="b us" x="196" y="232" width="58" height="24" rx="4"/>
+    <text x="225" y="243" text-anchor="middle" class="s" font-weight="700">A</text>
+    <text x="225" y="252" text-anchor="middle" class="xs">dl+seed</text>
+    <rect class="b us" x="262" y="232" width="58" height="24" rx="4"/>
+    <text x="291" y="243" text-anchor="middle" class="s" font-weight="700">B</text>
+    <text x="291" y="252" text-anchor="middle" class="xs">dl+seed</text>
+    <rect class="b us" x="328" y="232" width="58" height="24" rx="4"/>
+    <text x="357" y="243" text-anchor="middle" class="s" font-weight="700">N</text>
+    <text x="357" y="252" text-anchor="middle" class="xs">leech</text>
+    <rect class="b us" x="394" y="232" width="44" height="24" rx="4"/>
+    <text x="416" y="243" text-anchor="middle" class="s" font-weight="700">…</text>
+    <rect class="b us" x="196" y="264" width="58" height="20" rx="4"/>
+    <text x="225" y="277" text-anchor="middle" class="xs">C (leech)</text>
+    <rect class="b us" x="262" y="264" width="58" height="20" rx="4"/>
+    <text x="291" y="277" text-anchor="middle" class="xs">leech</text>
+    <rect class="b us" x="328" y="264" width="58" height="20" rx="4"/>
+    <text x="357" y="277" text-anchor="middle" class="xs">leech</text>
+    <line class="fg" x1="254" y1="244" x2="262" y2="244" marker-end="url(#arrg)"/>
+    <line class="fg" x1="320" y1="244" x2="328" y2="244" marker-end="url(#arrg)"/>
+    <line class="fg" x1="386" y1="244" x2="394" y2="244" marker-end="url(#arrg)"/>
+    <line class="fg" x1="225" y1="264" x2="225" y2="256" marker-end="url(#arrg)"/>
+    <line class="fg" x1="291" y1="264" x2="291" y2="256" marker-end="url(#arrg)"/>
+  </g>
+
+  <!-- webseeds -> swarm -->
+  <line class="fo" x1="166" y1="260" x2="183" y2="258" marker-end="url(#arro)"/>
+  <text x="174" y="254" text-anchor="middle" class="xs">HTTP</text>
+
+  <!-- 6 Users (right) -->
+  <g>
+    <rect class="b us" x="466" y="190" width="238" height="200" rx="6"/>
+    <circle cx="476" cy="200" r="6" fill="#cf222e"/><text x="476" y="203" text-anchor="middle" class="n">6</text>
+    <text x="585" y="208" text-anchor="middle" class="l">Users (browser + BT client)</text>
+    <line x1="474" y1="214" x2="696" y2="214" stroke="#cf222e" stroke-width="0.5"/>
+    <text x="474" y="226" class="s">• WS sub to many relays</text>
+    <text x="474" y="236" class="s">• verify 30099 (Schnorr)</text>
+    <text x="474" y="246" class="s">• fetch .torrent from Blossom</text>
+    <text x="474" y="256" class="s">• SHA-256 check vs x tag</text>
+    <text x="474" y="266" class="s">• magnet → BT client</text>
+    <text x="474" y="278" class="s">• download from peers + HF</text>
+    <text x="474" y="286" class="s">   simultaneously</text>
+  </g>
+
+  <!-- blossom -> users -->
+  <line class="fo" x1="510" y1="170" x2="540" y2="188" marker-end="url(#arro)"/>
+  <text x="498" y="184" class="xs">.torrent</text>
+
+  <!-- nostr -> users -->
+  <line class="fp" x1="390" y1="144" x2="464" y2="220" marker-end="url(#arrp)"/>
+  <text x="418" y="178" class="xs">events</text>
+
+  <!-- users -> swarm -->
+  <line class="f" x1="466" y1="260" x2="448" y2="260" marker-end="url(#arr)"/>
+  <text x="457" y="256" text-anchor="middle" class="xs">magnet</text>
+
+  <!-- legend -->
+  <g transform="translate(16,400)">
+    <rect class="hf" x="0"   y="0" width="9" height="7"/><text x="13" y="6" class="xs">HF</text>
+    <rect class="ca" x="40"  y="0" width="9" height="7"/><text x="53" y="6" class="xs">cache</text>
+    <rect class="pr" x="92"  y="0" width="9" height="7"/><text x="105" y="6" class="xs">builder</text>
+    <rect class="bl" x="150" y="0" width="9" height="7"/><text x="163" y="6" class="xs">Blossom</text>
+    <rect class="no" x="212" y="0" width="9" height="7"/><text x="225" y="6" class="xs">Nostr</text>
+    <rect class="us" x="268" y="0" width="9" height="7"/><text x="281" y="6" class="xs">users/swarm</text>
+    <line class="fo" x1="350" y1="4" x2="372" y2="4"/><text x="376" y="6" class="xs">torrent</text>
+    <line class="fp" x1="420" y1="4" x2="442" y2="4"/><text x="446" y="6" class="xs">event</text>
+    <line class="fg" x1="490" y1="4" x2="512" y2="4"/><text x="516" y="6" class="xs">peer</text>
+  </g>
+</svg>

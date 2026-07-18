@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+<rect width="1000" height="600" fill="#0e1117"/>
+<text x="70" y="32" fill="#e6edf3" font-size="22" font-weight="700">llama.garden pump speed test</text>
+<text x="70" y="54" fill="#7d8590" font-size="13">pumps + pump-api-v3 redirector + HTTP webseeds  vs.  pure BitTorrent UDP from 1 peer</text>
+<line x1="70.0" y1="80" x2="70.0" y2="530" stroke="#21262d" stroke-width="1"/>
+<text x="70.0" y="548" fill="#7d8590" font-size="11" text-anchor="middle">0s</text>
+<line x1="239.4" y1="80" x2="239.4" y2="530" stroke="#21262d" stroke-width="1"/>
+<text x="239.4" y="548" fill="#7d8590" font-size="11" text-anchor="middle">20s</text>
+<line x1="408.9" y1="80" x2="408.9" y2="530" stroke="#21262d" stroke-width="1"/>
+<text x="408.9" y="548" fill="#7d8590" font-size="11" text-anchor="middle">40s</text>
+<line x1="578.3" y1="80" x2="578.3" y2="530" stroke="#21262d" stroke-width="1"/>
+<text x="578.3" y="548" fill="#7d8590" font-size="11" text-anchor="middle">60s</text>
+<line x1="747.7" y1="80" x2="747.7" y2="530" stroke="#21262d" stroke-width="1"/>
+<text x="747.7" y="548" fill="#7d8590" font-size="11" text-anchor="middle">80s</text>
+<line x1="917.1" y1="80" x2="917.1" y2="530" stroke="#21262d" stroke-width="1"/>
+<text x="917.1" y="548" fill="#7d8590" font-size="11" text-anchor="middle">100s</text>
+<line x1="70" y1="530.0" x2="960" y2="530.0" stroke="#21262d" stroke-width="1"/>
+<text x="60" y="534.0" fill="#7d8590" font-size="11" text-anchor="end">0</text>
+<line x1="70" y1="382.3" x2="960" y2="382.3" stroke="#21262d" stroke-width="1"/>
+<text x="60" y="386.3" fill="#7d8590" font-size="11" text-anchor="end">100</text>
+<line x1="70" y1="234.7" x2="960" y2="234.7" stroke="#21262d" stroke-width="1"/>
+<text x="60" y="238.7" fill="#7d8590" font-size="11" text-anchor="end">200</text>
+<line x1="70" y1="87.0" x2="960" y2="87.0" stroke="#21262d" stroke-width="1"/>
+<text x="60" y="91.0" fill="#7d8590" font-size="11" text-anchor="end">300</text>
+<text x="20" y="305.0" fill="#7d8590" font-size="13" text-anchor="middle" transform="rotate(-90 20 305.0)">download rate (MB/s)</text>
+<text x="515.0" y="575" fill="#7d8590" font-size="13" text-anchor="middle">elapsed seconds</text>
+<rect x="70" y="80" width="890" height="450" fill="none" stroke="#30363d" stroke-width="1"/>
+<polygon points="70,530 113.5,120.9 156.2,136.6 201.1,346.1 243.5,477.5 286.0,332.1 328.5,351.8 370.8,362.9 413.3,366.4 455.7,400.9 498.1,367.3 540.6,379.2 540.6,530" fill="#ff8c42" fill-opacity="0.12"/>
+<polyline points="113.5,120.9 156.2,136.6 201.1,346.1 243.5,477.5 286.0,332.1 328.5,351.8 370.8,362.9 413.3,366.4 455.7,400.9 498.1,367.3 540.6,379.2" fill="none" stroke="#ff8c42" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="70,530 112.4,530.0 154.7,530.0 197.2,530.0 239.5,530.0 281.9,530.0 324.2,530.0 366.7,494.3 409.0,481.6 451.4,481.6 493.7,505.8 536.2,481.6 578.5,500.6 620.9,505.8 663.3,480.9 705.7,500.5 748.0,481.6 790.4,498.7 832.8,481.6 875.2,498.6 917.6,492.7 960.0,475.0 960.0,530" fill="#58a6ff" fill-opacity="0.10"/>
+<polyline points="112.4,530.0 154.7,530.0 197.2,530.0 239.5,530.0 281.9,530.0 324.2,530.0 366.7,494.3 409.0,481.6 451.4,481.6 493.7,505.8 536.2,481.6 578.5,500.6 620.9,505.8 663.3,480.9 705.7,500.5 748.0,481.6 790.4,498.7 832.8,481.6 875.2,498.6 917.6,492.7 960.0,475.0" fill="none" stroke="#58a6ff" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="113.5" cy="120.9" r="2.6" fill="#ff8c42"/>
+<circle cx="156.2" cy="136.6" r="2.6" fill="#ff8c42"/>
+<circle cx="201.1" cy="346.1" r="2.6" fill="#ff8c42"/>
+<circle cx="243.5" cy="477.5" r="2.6" fill="#ff8c42"/>
+<circle cx="286.0" cy="332.1" r="2.6" fill="#ff8c42"/>
+<circle cx="328.5" cy="351.8" r="2.6" fill="#ff8c42"/>
+<circle cx="370.8" cy="362.9" r="2.6" fill="#ff8c42"/>
+<circle cx="413.3" cy="366.4" r="2.6" fill="#ff8c42"/>
+<circle cx="455.7" cy="400.9" r="2.6" fill="#ff8c42"/>
+<circle cx="498.1" cy="367.3" r="2.6" fill="#ff8c42"/>
+<circle cx="540.6" cy="379.2" r="2.6" fill="#ff8c42"/>
+<circle cx="112.4" cy="530.0" r="2.6" fill="#58a6ff"/>
+<circle cx="154.7" cy="530.0" r="2.6" fill="#58a6ff"/>
+<circle cx="197.2" cy="530.0" r="2.6" fill="#58a6ff"/>
+<circle cx="239.5" cy="530.0" r="2.6" fill="#58a6ff"/>
+<circle cx="281.9" cy="530.0" r="2.6" fill="#58a6ff"/>
+<circle cx="324.2" cy="530.0" r="2.6" fill="#58a6ff"/>
+<circle cx="366.7" cy="494.3" r="2.6" fill="#58a6ff"/>
+<circle cx="409.0" cy="481.6" r="2.6" fill="#58a6ff"/>
+<circle cx="451.4" cy="481.6" r="2.6" fill="#58a6ff"/>
+<circle cx="493.7" cy="505.8" r="2.6" fill="#58a6ff"/>
+<circle cx="536.2" cy="481.6" r="2.6" fill="#58a6ff"/>
+<circle cx="578.5" cy="500.6" r="2.6" fill="#58a6ff"/>
+<circle cx="620.9" cy="505.8" r="2.6" fill="#58a6ff"/>
+<circle cx="663.3" cy="480.9" r="2.6" fill="#58a6ff"/>
+<circle cx="705.7" cy="500.5" r="2.6" fill="#58a6ff"/>
+<circle cx="748.0" cy="481.6" r="2.6" fill="#58a6ff"/>
+<circle cx="790.4" cy="498.7" r="2.6" fill="#58a6ff"/>
+<circle cx="832.8" cy="481.6" r="2.6" fill="#58a6ff"/>
+<circle cx="875.2" cy="498.6" r="2.6" fill="#58a6ff"/>
+<circle cx="917.6" cy="492.7" r="2.6" fill="#58a6ff"/>
+<circle cx="960.0" cy="475.0" r="2.6" fill="#58a6ff"/>
+<rect x="82" y="92" width="290" height="76" rx="6" fill="#161b22" stroke="#30363d"/>
+<line x1="94" y1="114" x2="120" y2="114" stroke="#ff8c42" stroke-width="2.5"/>
+<circle cx="107" cy="114" r="2.6" fill="#ff8c42"/>
+<text x="130" y="118" fill="#e6edf3" font-size="12">A: 6 pumps + 7 webseeds (HTTP)</text>
+<line x1="94" y1="136" x2="120" y2="136" stroke="#58a6ff" stroke-width="2.5"/>
+<circle cx="107" cy="136" r="2.6" fill="#58a6ff"/>
+<text x="130" y="140" fill="#e6edf3" font-size="12">B: 1 BT peer, 0 webseeds (UDP)</text>
+<text x="94" y="160" fill="#7d8590" font-size="10">muscle transmission 4.0.5 · 127.0.0.1:9091 · fresh download dir</text>
+<rect x="720" y="92" width="228" height="110" rx="6" fill="#161b22" stroke="#30363d"/>
+<text x="732" y="114" fill="#7d8590" font-size="11" font-weight="600">RESULT</text>
+<text x="732" y="134" fill="#ff8c42" font-size="12">A avg 77.1 MB/s · peak 277.0 MB/s</text>
+<text x="732" y="152" fill="#58a6ff" font-size="12">B avg 20.6 MB/s · peak 37.3 MB/s</text>
+<text x="732" y="174" fill="#e6edf3" font-size="12" font-weight="600">speedup: 3.74× avg, 7.44× peak</text>
+<text x="732" y="192" fill="#7d8590" font-size="10">A 4.19GB in 56s · B 2.06GB in 105s</text>
+<text x="70" y="582" fill="#7d8590" font-size="11">A: Qwen3.6-27B-exl3 (113.87GB, ih=770a92a…) · 6 pumps @100% · 7 webseeds (1 HF + 6 pump-api-v3 redirectors) · 7 BT peers</text>
+<text x="70" y="596" fill="#7d8590" font-size="11">B: baidu/Unlimited-OCR (6.78GB, ih=b8b4516…) · 1 pump @100% · webseeds stripped · 2 BT peers · 0 webseeds</text>
+</svg>

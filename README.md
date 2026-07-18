@@ -26,6 +26,31 @@ This repo holds only the parts of llama.garden that have been manually open-sour
 
 6. **Watch the fleet** — `report.py` prints a health report across all Transmission instances listed in `pumps.txt` / `muscles.txt`: reachability, free disk space, per-torrent tables with rates / ratio / peer counts / cluster-unique seeder counts, plus cluster-wide sections. As a side effect it writes `pumps.lmdb` — an LMDB map keyed by raw infohash bytes, whose values are JSON arrays of `{"ip": <host>, "percent_done": <0-100>}` for every online pump that has that torrent. That LMDB is what the pump API behind `api.llama.garden/pumps` serves to the viewer.
 
+## Why the pumps exist — a speed test
+
+The whole point of the pump fleet + pump-api-v3 redirector + HF webseeds is that plain BitTorrent over UDP is slow, and HTTP is fast. To prove this on real bytes, the same Transmission instance (`127.0.0.1:9091`, fresh download dir each run) was pointed at two torrents:
+
+- **A — pumps + webseeds.** `Qwen3.6-27B-exl3` (113.87 GB, infohash `770a92a9…`), seeded by **6 pumps at 100%** and carrying **7 webseeds** (1 HuggingFace direct + 6 `api.llama.garden` redirector variants backed by `pump-api-v3`).
+- **B — one BT peer, no webseeds.** `baidu/Unlimited-OCR` (6.78 GB, infohash `b8b45160…`), seeded by **1 pump at 100%**. The `.torrent` was copied and the `url-list` was stripped (infohash preserved) so the client could only pull bytes over UDP from the single peer.
+
+Each run was stopped after a few GB. The chart below overlays the two download-rate traces.
+
+![speed test](speed-test.svg)
+
+| | A — pumps + 7 webseeds | B — 1 BT peer, 0 webseeds |
+| --- | --- | --- |
+| Avg rate | **77.1 MB/s** | 20.6 MB/s |
+| Peak rate | **277.0 MB/s** | 37.3 MB/s |
+| Downloaded | 4.19 GB | 2.06 GB |
+| Time | 55.5 s | 105.1 s |
+| BT peers | 7 | 2 |
+| Webseed senders | 7 | 0 |
+| **Speedup vs B** | **3.74× avg, 7.44× peak** | 1.0× |
+
+A also ramped instantly — at t=5 s it was already at 277 MB/s — while B sat at 0 MB/s for the first 30 s waiting for the lone peer to start. The redirector webseeds (`z1.api.llama.garden`, `z2.api.llama.garden`, `1@`…`4@api.llama.garden`) all proxy to `pump-api-v3`, which 302-redirects each piece request to a pump at ≥70% done or, failing that, straight to the HF CDN. So the client pulls the same torrent over plain HTTP from whichever pump is closest, with BitTorrent UDP as a fallback instead of the only option.
+
+The chart and the raw per-sample data that produced it live in this repo as `speed-test.svg`.
+
 ## Files in this repo
 
 | File | What it does |
@@ -38,7 +63,6 @@ This repo holds only the parts of llama.garden that have been manually open-sour
 | `publish-waifu-magnet.py` | Upload a `waifu-magnet-NN.html` release to Blossom servers and announce it on Nostr via a kind 30100 parameterized-replaceable event. Requires `NSEC` env var and `nostr-sdk`. |
 | `report.py` | Health report across all pumps + muscles. Per-server tables + cluster-wide unique-seeders and per-torrent-pump-count sections. Writes `pumps.lmdb` as a side effect. |
 | `waifu-magnet-16.html`, `waifu-magnet-22.html` | The single-file HTML viewer. v22 is current; v16 is kept for reference. |
-| `flow.svg` | Diagram of how the pieces fit together. |
 | `LICENSE` | MIT. |
 
 ## Nostr event kinds used

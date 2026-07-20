@@ -51,6 +51,12 @@ A also ramped instantly — at t=5 s it was already at 277 MB/s — while B sat 
 
 The chart and the raw per-sample data that produced it live in this repo as `speed-test.svg`.
 
+### Another speed test
+
+You'd get 892 kB/s across atlantic if UDP (default BitTorrent traffic) was the only option. But with http webseeds + HF, we get much higher download speeds:
+
+![speed test across atlantic](speed-test-2.png)
+
 ## Files in this repo
 
 | File | What it does |

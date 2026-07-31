@@ -1,0 +1,7 @@
+wss://nos.lol/
+wss://relay.primal.net/
+wss://nostr-01.yakihonne.com/
+wss://nostr.mom/
+wss://relay.mostr.pub
+wss://no.str.cr
+wss://offchain.pub

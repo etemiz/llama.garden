@@ -45,12 +45,13 @@ PREREQUISITES
 
 QUICK START
 -----------
-  # 1. Build a repo into a .torrent + manifest (hash only, no files saved):
+  # 1. Build a repo into a .torrent + manifest (hash only, no disk I/O —
+  #    this is the default):
   export HF_TOKEN=hf_xxx
-  python maker-v6.py turboderp/Qwen3.6-27B-exl3 --num-workers 16 --no-write
+  python maker-v6.py turboderp/Qwen3.6-27B-exl3 --num-workers 16
 
   # 2. Same, but also write the model files to disk as they stream (so you
-  #    can seed from this host afterwards):
+  #    can seed from this host afterwards). Writing is opt-in:
   python maker-v6.py org/repo --num-workers 16 --write-dir ./seeds/<repo>
 
   # 3. Publish the finished torrent to llama.garden's Nostr index:
@@ -59,7 +60,7 @@ QUICK START
   # 4. Remote build over SSH (recommended for big repos — see
   #    docs/maker-v6-remote-build.md for the full guide):
   ssh remote "cd ~/ob && HF_TOKEN=hf_xxx python3 maker-v6.py org/repo \
-    --num-workers 16 --chunk-size 4194304 --no-write"
+    --num-workers 16 --chunk-size 4194304"
 
 FLAGS
 -----
@@ -67,14 +68,15 @@ FLAGS
   --chunk-size B     read chunk size (default 1 MiB)
   --max-retries N    per-file resume retries (default 10)
   --hasher-bin PATH  path to the Go binary (default ./hf-piece-hasher)
-  --no-write          hash in memory, write only .torrent + manifest
-  --write-dir DIR     also write the streamed files to DIR
+  --no-write          (removed — no-write is now the default)
+  --write-dir DIR     write the streamed files to DIR (opt-in; default OFF)
   --mask GLOB         repeatable basename glob to include (default all)
   --redirector-host   redirector host for the CNAME/N@ webseeds
                       (default api.llama.garden)
 
 Removed vs v5 (all disk/seed concerns): --yes, --delete, --keep-dir,
---shard, --num-downloaders, --hash-workers, --no-verify, --min-free-gb.
+--shard, --num-downloaders, --hash-workers, --no-verify, --min-free-gb,
+--no-write (no-write is now the default; use --write-dir to opt in).
 
 TORRENT LAYOUT (same as v3/v4/v5)
 ---------------------------------
@@ -985,11 +987,9 @@ def main():
                    help="redirector host for CNAME/N@ webseeds "
                         f"(default: {REDIRECTOR_HOST}; use 127.0.0.1:8083 "
                         "for local pump-api-v3 testing)")
-    p.add_argument("--write-dir", default="./muscle-shared",
+    p.add_argument("--write-dir", default=None,
                    help="write downloaded files here after hashing "
-                        "(default: ./muscle-shared; set --no-write to skip)")
-    p.add_argument("--no-write", action="store_true",
-                   help="don't write files to disk — hash only, no disk I/O")
+                        "(default: OFF — no disk I/O; pass a path to enable)")
     args = p.parse_args()
 
     hasher_bin = args.hasher_bin
@@ -1169,7 +1169,7 @@ def main():
     hf_token = os.environ.get("HF_TOKEN") or None
     origin = "https://huggingface.co"
 
-    write_dir = None if args.no_write else args.write_dir
+    write_dir = args.write_dir
     if write_dir:
         write_dir = str(Path(write_dir).resolve())
         cprint(C.DIM, f"  write: {write_dir}/{repo}/")
